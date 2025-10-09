@@ -1,0 +1,5 @@
+{
+  "name": "Painel de Postagens Pro",
+  "description": "Um painel de controle avançado para agendamento e acompanhamento de postagens em redes sociais. Inclui status automático, filtros, agrupamento, exportação e gráficos de análise de desempenho.",
+  "requestFramePermissions": []
+}
