@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Post, Format } from '../types';
 import { FORMAT_OPTIONS } from '../constants';
-import { isValidDriveLink } from '../utils/postUtils';
+import { isValidDriveLink, isValidDocLink } from '../utils/postUtils';
 
 interface PostFormModalProps {
     post: Post | null;
@@ -19,9 +19,11 @@ const PostFormModal: React.FC<PostFormModalProps> = ({ post, onSave, onClose, ac
         product: '',
         format: Format.UGC,
         driveLink: '',
+        copyLink: '',
         isPosted: false,
     });
-    const [linkError, setLinkError] = useState<string | null>(null);
+    const [driveLinkError, setDriveLinkError] = useState<string | null>(null);
+    const [copyLinkError, setCopyLinkError] = useState<string | null>(null);
 
     useEffect(() => {
         if (post) {
@@ -34,29 +36,37 @@ const PostFormModal: React.FC<PostFormModalProps> = ({ post, onSave, onClose, ac
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
         
         if (name === 'driveLink') {
             if (value && !isValidDriveLink(value)) {
-                setLinkError('Por favor, insira um link válido do Google Drive.');
+                setDriveLinkError('Por favor, insira um link válido do Google Drive.');
             } else {
-                setLinkError(null);
+                setDriveLinkError(null);
             }
         }
+
+        if (name === 'copyLink') {
+            if (value && !isValidDocLink(value)) {
+                setCopyLinkError('Por favor, insira um link válido do Google Docs.');
+            } else {
+                setCopyLinkError(null);
+            }
+        }
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
     
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (linkError) {
-            alert(linkError);
+        if (driveLinkError || copyLinkError) {
+            alert(driveLinkError || copyLinkError);
             return;
         }
         onSave(formData as Post);
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-            <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-primary-800 animate-fade-in">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
+            <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-primary-800 animate-fade-in max-h-full overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-white">{post ? 'Editar Registro' : 'Novo Registro'}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
@@ -74,9 +84,14 @@ const PostFormModal: React.FC<PostFormModalProps> = ({ post, onSave, onClose, ac
                         </datalist>
                     </div>
                     <div>
-                        <label htmlFor="driveLink" className="block text-sm font-medium text-gray-300">Link do Drive</label>
-                        <input type="url" name="driveLink" id="driveLink" value={formData.driveLink} onChange={handleChange} placeholder="https://drive.google.com/..." className={`mt-1 block w-full bg-gray-900 border ${linkError ? 'border-red-500' : 'border-gray-600'} rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500`} />
-                        {linkError && <p className="mt-1 text-sm text-red-400">{linkError}</p>}
+                        <label htmlFor="driveLink" className="block text-sm font-medium text-gray-300">Link do Criativo (Drive)</label>
+                        <input type="url" name="driveLink" id="driveLink" value={formData.driveLink} onChange={handleChange} placeholder="https://drive.google.com/..." className={`mt-1 block w-full bg-gray-900 border ${driveLinkError ? 'border-red-500' : 'border-gray-600'} rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500`} />
+                        {driveLinkError && <p className="mt-1 text-sm text-red-400">{driveLinkError}</p>}
+                    </div>
+                    <div>
+                        <label htmlFor="copyLink" className="block text-sm font-medium text-gray-300">Link da Copy (Doc)</label>
+                        <input type="url" name="copyLink" id="copyLink" value={formData.copyLink} onChange={handleChange} placeholder="https://docs.google.com/..." className={`mt-1 block w-full bg-gray-900 border ${copyLinkError ? 'border-red-500' : 'border-gray-600'} rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500`} />
+                        {copyLinkError && <p className="mt-1 text-sm text-red-400">{copyLinkError}</p>}
                     </div>
                     <div>
                         <label htmlFor="format" className="block text-sm font-medium text-gray-300">Formato *</label>

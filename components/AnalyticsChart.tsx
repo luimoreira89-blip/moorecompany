@@ -88,7 +88,7 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ allPosts }) => {
 
   return (
     <div className="bg-gray-800/50 border border-gray-700 p-4 sm:p-6 rounded-lg">
-      <h2 className="text-xl font-bold text-white mb-4">Análise de Postagens</h2>
+      <h2 className="text-xl font-bold text-white mb-4">Análise de Conteúdo</h2>
       <div className="flex flex-wrap gap-4 mb-4 items-end">
         <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">Visão</label>

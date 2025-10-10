@@ -1,6 +1,5 @@
-
 import { Post, Status, Period } from '../types';
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isBefore, format, parseISO } from 'date-fns';
+import { startOfDay, endOfDay, isBefore, format, parseISO, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const getStatus = (post: Post): Status => {
@@ -20,14 +19,18 @@ export const getStatus = (post: Post): Status => {
 export const getPeriodRange = (period: Period): { start: Date; end: Date } => {
     const now = new Date();
     switch (period) {
-        case Period.Daily:
+        case Period.Today:
             return { start: startOfDay(now), end: endOfDay(now) };
-        case Period.Weekly:
-            return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
-        case Period.Monthly:
-            return { start: startOfMonth(now), end: endOfMonth(now) };
+        case Period.Yesterday:
+            const yesterday = subDays(now, 1);
+            return { start: startOfDay(yesterday), end: endOfDay(yesterday) };
+        case Period.Last7Days:
+            return { start: startOfDay(subDays(now, 6)), end: endOfDay(now) };
+        case Period.Last30Days:
+            return { start: startOfDay(subDays(now, 29)), end: endOfDay(now) };
         default:
-            return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+            // Period.Custom is handled outside this function, so this is a fallback.
+            return { start: startOfDay(subDays(now, 6)), end: endOfDay(now) };
     }
 };
 

@@ -51,13 +51,22 @@ const PostRow: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post:
                     </div>
                 </div>
             </td>
+            <td className="px-4 py-4 whitespace-nowrap text-center">
+                 {post.driveLink && (
+                    <a href={post.driveLink} target="_blank" rel="noopener noreferrer" title="Abrir link do criativo">
+                         <img src="https://iili.io/Kwj8bMQ.png" alt="Ícone Google Drive" className="h-6 w-6 mx-auto hover:opacity-80 transition-opacity" />
+                    </a>
+                )}
+            </td>
+            <td className="px-4 py-4 whitespace-nowrap text-center">
+                 {post.copyLink && (
+                    <a href={post.copyLink} target="_blank" rel="noopener noreferrer" title="Abrir link da copy">
+                         <img src="https://iili.io/KwjBsoI.png" alt="Ícone Google Docs" className="h-6 w-6 mx-auto hover:opacity-80 transition-opacity" />
+                    </a>
+                )}
+            </td>
             <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex items-center justify-end gap-4">
-                    {post.driveLink && (
-                        <a href={post.driveLink} target="_blank" rel="noopener noreferrer" title="Abrir link do Drive">
-                             <img src="https://iili.io/Kwj8bMQ.png" alt="Ícone Google Drive" className="h-6 w-6 hover:opacity-80 transition-opacity" />
-                        </a>
-                    )}
                     <button onClick={() => onEdit(post)} className="text-primary-400 hover:text-primary-300">Editar</button>
                     <button onClick={() => onDelete(post.id)} className="text-red-400 hover:text-red-300">Excluir</button>
                 </div>
@@ -68,7 +77,7 @@ const PostRow: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post:
 
 
 const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }) => {
-
+    const totalColumns = 9;
     const groupedPosts = React.useMemo(() => {
         if (!groupByAccount) return null;
         return posts.reduce((acc, post) => {
@@ -95,6 +104,8 @@ const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }
                         <SortableHeader title="Produto" sortKey="product" {...props} />
                         <SortableHeader title="Formato" sortKey="format" {...props} />
                         <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">Criativo</th>
+                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">Copy</th>
                         <th scope="col" className="relative px-4 py-3"><span className="sr-only">Ações</span></th>
                     </tr>
                 </thead>
@@ -103,7 +114,7 @@ const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }
                         Object.entries(groupedPosts).map(([account, data]) => (
                             <React.Fragment key={account}>
                                 <tr className="bg-gray-900">
-                                    <td colSpan={7} className="px-4 py-3 text-sm font-bold text-primary-300">
+                                    <td colSpan={totalColumns} className="px-4 py-3 text-sm font-bold text-primary-300">
                                         <div className="flex justify-between items-center">
                                             <span>{account}</span>
                                             <div className="flex gap-4 text-xs font-normal">
@@ -122,7 +133,7 @@ const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }
                     )}
                     {posts.length === 0 && (
                         <tr>
-                            <td colSpan={7} className="text-center py-10 text-gray-500">Nenhum registro encontrado para o período selecionado.</td>
+                            <td colSpan={totalColumns} className="text-center py-10 text-gray-500">Nenhum registro encontrado para o período selecionado.</td>
                         </tr>
                     )}
                 </tbody>

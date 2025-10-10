@@ -6,3 +6,12 @@ export const isValidDriveLink = (url: string): boolean => {
         return false;
     }
 };
+
+export const isValidDocLink = (url: string): boolean => {
+    try {
+        const parsedUrl = new URL(url);
+        return parsedUrl.hostname === 'docs.google.com';
+    } catch (error) {
+        return false;
+    }
+};

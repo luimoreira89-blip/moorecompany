@@ -41,22 +41,35 @@ const AuthPage: React.FC<AuthPageProps> = ({ login, register }) => {
         }
     };
 
+    const backgroundStyle: React.CSSProperties = {
+        backgroundColor: '#111827',
+        backgroundImage: `
+            url('https://iili.io/KwgA0v4.png'),
+            url('https://iili.io/KwUbhZX.png')
+        `,
+        backgroundPosition: '-15vw center, right center',
+        backgroundRepeat: 'no-repeat, no-repeat',
+        backgroundSize: 'auto 100vh, auto 100vh',
+        backgroundAttachment: 'fixed',
+    };
+
     return (
-        <div className="flex items-center justify-center min-h-screen">
-            <div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-lg shadow-lg border border-primary-800">
-                <div className="text-center">
-                    <img src="https://iili.io/KwW3VNj.png" alt="Logo Painel de Postagens" className="w-40 mx-auto mb-6" />
+        <div className="flex items-center justify-center min-h-screen w-full" style={backgroundStyle}>
+            <div className="w-full max-w-md p-8 space-y-8 bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-2xl border border-primary-800/60">
+                <div className="text-center mb-8">
+                     <img src="https://iili.io/Kw8h2El.png" alt="Utmify Logo" className="h-28 w-auto mx-auto" />
+                    <h2 className="text-2xl text-white mt-4">Análise de Métricas - TikTok Shop</h2>
                 </div>
                 <div className="flex border-b border-gray-700">
                     <button
                         onClick={() => { setIsLogin(true); setError(''); setSuccess(''); }}
-                        className={`w-1/2 py-4 text-center font-medium ${isLogin ? 'text-primary-400 border-b-2 border-primary-400' : 'text-gray-400'}`}
+                        className={`w-1/2 py-4 text-center font-medium transition-all duration-300 ${isLogin ? 'text-primary-400 border-b-2 border-primary-400' : 'text-gray-400 hover:text-primary-500'}`}
                     >
                         Login
                     </button>
                     <button
                         onClick={() => { setIsLogin(false); setError(''); setSuccess(''); }}
-                        className={`w-1/2 py-4 text-center font-medium ${!isLogin ? 'text-primary-400 border-b-2 border-primary-400' : 'text-gray-400'}`}
+                        className={`w-1/2 py-4 text-center font-medium transition-all duration-300 ${!isLogin ? 'text-primary-400 border-b-2 border-primary-400' : 'text-gray-400 hover:text-primary-500'}`}
                     >
                         Cadastro
                     </button>

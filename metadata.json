@@ -1,5 +1,5 @@
 {
-  "name": "Painel de Postagens Pro",
-  "description": "Um painel de controle avançado para agendamento e acompanhamento de postagens em redes sociais. Inclui status automático, filtros, agrupamento, exportação e gráficos de análise de desempenho.",
+  "name": "Análise de Métricas - TikTok Shop",
+  "description": "Um painel de controle avançado para análise de métricas e desempenho de vendas no TikTok Shop. Inclui KPIs, filtros, e gráficos detalhados.",
   "requestFramePermissions": []
 }

@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel de Postagens Pro</title>
+  <title>Análise de Métricas - TikTok Shop</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -31,6 +30,22 @@
       }
     }
   </script>
+<style>
+    @keyframes pulse-neon {
+      0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 4px #39ff14, 0 0 8px #39ff14;
+      }
+      50% {
+        opacity: 0.8;
+        box-shadow: 0 0 8px #39ff14, 0 0 12px #39ff14;
+      }
+    }
+    .progress-bar-neon {
+      background-color: #39ff14; /* Verde Neon Forte */
+      animation: pulse-neon 1.5s ease-in-out infinite;
+    }
+</style>
 <script type="importmap">
 {
   "imports": {
