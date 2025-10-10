@@ -75,12 +75,18 @@ const PostRow: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post:
     );
 };
 
+// Fix: Define a type for the grouped data to ensure type safety.
+type GroupedData = {
+    posts: (Post & { derivedStatus: Status })[];
+    stats: { posted: number; pending: number; overdue: number };
+};
 
 const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }) => {
     const totalColumns = 9;
     const groupedPosts = React.useMemo(() => {
         if (!groupByAccount) return null;
-        return posts.reduce((acc, post) => {
+        // Fix: Use a generic argument for reduce to strongly type the accumulator.
+        return posts.reduce<Record<string, GroupedData>>((acc, post) => {
             const account = post.account || 'Sem Conta';
             if (!acc[account]) {
                 acc[account] = { posts: [], stats: { posted: 0, pending: 0, overdue: 0 }};
@@ -90,7 +96,7 @@ const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }
             else if (post.derivedStatus === Status.Pending) acc[account].stats.pending++;
             else if (post.derivedStatus === Status.Overdue) acc[account].stats.overdue++;
             return acc;
-        }, {} as Record<string, { posts: (Post & { derivedStatus: Status })[], stats: { posted: number, pending: number, overdue: number } }>);
+        }, {});
     }, [posts, groupByAccount]);
 
     return (

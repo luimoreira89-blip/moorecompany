@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Post, User, Status, Period, Format } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
@@ -6,7 +7,7 @@ import PostTable from './PostTable';
 import PostFormModal from './PostFormModal';
 import AnalyticsChart from './AnalyticsChart';
 import { isValidDriveLink } from '../utils/postUtils';
-import { parseISO, startOfDay, endOfDay, subDays, format, eachDayOfInterval } from 'date-fns';
+import { parseISO, startOfDay, endOfDay, subDays, format, eachDayOfInterval, subHours } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 
 
@@ -51,7 +52,8 @@ const KpiCard: React.FC<{ title: string; value: string; }> = ({ title, value }) 
 
 interface DailyMetric {
     id: string;
-    date: string;
+    createdAt: string;
+    date: string; // YYYY-MM-DD
     account: string;
     gmv: number;
     sales: number;
@@ -61,10 +63,11 @@ interface DailyMetric {
 }
 
 const DailyMetricFormModal: React.FC<{
-    onSave: (metric: Omit<DailyMetric, 'id'>) => void;
+    onSave: (metric: Omit<DailyMetric, 'createdAt'> & { id?: string }) => void;
     onClose: () => void;
     accounts: string[];
-}> = ({ onSave, onClose, accounts }) => {
+    metricToEdit: DailyMetric | null;
+}> = ({ onSave, onClose, accounts, metricToEdit }) => {
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
         account: '',
@@ -74,6 +77,31 @@ const DailyMetricFormModal: React.FC<{
         clicks: 0,
         lucro: 0,
     });
+
+    useEffect(() => {
+        if (metricToEdit) {
+            setFormData({
+                date: metricToEdit.date,
+                account: metricToEdit.account,
+                gmv: metricToEdit.gmv,
+                sales: metricToEdit.sales,
+                views: metricToEdit.views,
+                clicks: metricToEdit.clicks,
+                lucro: metricToEdit.lucro,
+            });
+        } else {
+            setFormData({
+                date: new Date().toISOString().split('T')[0],
+                account: '',
+                gmv: 0,
+                sales: 0,
+                views: 0,
+                clicks: 0,
+                lucro: 0,
+            });
+        }
+    }, [metricToEdit]);
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -86,13 +114,13 @@ const DailyMetricFormModal: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData);
+        onSave({ ...formData, id: metricToEdit?.id });
     };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
             <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-primary-800 max-h-full overflow-y-auto">
-                <h2 className="text-2xl font-bold text-white mb-4">Adicionar Registro Diário</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">{metricToEdit ? 'Editar Registro' : 'Adicionar Registro Diário'}</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -141,6 +169,7 @@ const DailyMetricFormModal: React.FC<{
 const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]; }> = ({ user, logout, posts }) => {
     const [dailyMetrics, setDailyMetrics] = useLocalStorage<DailyMetric[]>(`metrics_${user.username}`, []);
     const [isMetricModalOpen, setIsMetricModalOpen] = useState(false);
+    const [editingMetric, setEditingMetric] = useState<DailyMetric | null>(null);
     const [period, setPeriod] = useState<Period>(Period.Last7Days);
     const todayStr = new Date().toISOString().split('T')[0];
     const [customStartDate, setCustomStartDate] = useState(todayStr);
@@ -171,8 +200,6 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
     
     const filteredMetrics = useMemo(() => {
         return dailyMetrics.filter(m => {
-            // The date string 'YYYY-MM-DD' is timezone-agnostic.
-            // We treat it as a local date to avoid timezone conversion issues.
             const [year, month, day] = m.date.split('-').map(Number);
             const metricDate = new Date(year, month - 1, day);
             
@@ -207,10 +234,49 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
 
     const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    const handleSaveMetric = (metric: Omit<DailyMetric, 'id'>) => {
-        setDailyMetrics(prev => [...prev, { ...metric, id: Date.now().toString() }]);
+    const handleSaveMetric = (metricData: Omit<DailyMetric, 'createdAt'> & { id?: string }) => {
+        if (metricData.id) { // Editing
+            setDailyMetrics(prev => prev.map(m => m.id === metricData.id ? { ...m, ...metricData } as DailyMetric : m));
+        } else { // Creating
+            const newMetric: DailyMetric = {
+                ...(metricData as Omit<DailyMetric, 'id' | 'createdAt'>),
+                id: Date.now().toString(),
+                createdAt: new Date().toISOString(),
+            };
+            setDailyMetrics(prev => [...prev, newMetric]);
+        }
         setIsMetricModalOpen(false);
+        setEditingMetric(null);
     };
+    
+    const handleEditMetric = (metric: DailyMetric) => {
+        setEditingMetric(metric);
+        setIsMetricModalOpen(true);
+    };
+
+    const handleDeleteMetric = (id: string) => {
+        if (window.confirm('Tem certeza que deseja excluir este registro? A ação é irreversível.')) {
+            setDailyMetrics(prev => prev.filter(m => m.id !== id));
+        }
+    };
+    
+    const handleOpenAddModal = () => {
+        setEditingMetric(null);
+        setIsMetricModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsMetricModalOpen(false);
+        setEditingMetric(null);
+    };
+
+    const recentMetrics = useMemo(() => {
+        const twentyFourHoursAgo = subHours(new Date(), 24);
+        return dailyMetrics
+            .filter(m => m.createdAt && parseISO(m.createdAt) >= twentyFourHoursAgo)
+            .sort((a, b) => parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime());
+    }, [dailyMetrics]);
+
 
     // Effect to update chart dates when period changes
     useEffect(() => {
@@ -326,10 +392,9 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
                         </div>
                     </div>
                     
-                    {/* Button - on the right */}
                     <div className="w-full md:w-auto md:absolute md:right-0">
                         <button 
-                            onClick={() => setIsMetricModalOpen(true)} 
+                            onClick={handleOpenAddModal} 
                             className="w-full md:w-auto px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md"
                         >
                             Adicionar Registro Diário
@@ -346,6 +411,50 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
                 <KpiCard title="RPP (RECEITA POR POST)" value={formatCurrency(metrics.rpp)} />
                 <KpiCard title="CLIQUES" value={metrics.cliques.toLocaleString('pt-BR')} />
                 <KpiCard title="VIEWS" value={metrics.views.toLocaleString('pt-BR')} />
+            </div>
+
+            {/* --- HISTÓRICO DE REGISTROS --- */}
+            <div className="bg-gray-800/50 border border-gray-700 p-4 sm:p-6 rounded-lg">
+                <h2 className="text-xl font-bold text-white mb-4">Histórico de Registros (Últimas 24h)</h2>
+                {recentMetrics.length > 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-700">
+                            <thead className="bg-gray-800">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Data</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Conta</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">GMV</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Lucro</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vendas</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Views</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Cliques</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-700">
+                                {recentMetrics.map(metric => (
+                                    <tr key={metric.id} className="hover:bg-gray-700/50 transition-colors">
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{format(parseISO(metric.date), 'dd/MM/yyyy')}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">{metric.account}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{formatCurrency(metric.gmv)}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{formatCurrency(metric.lucro)}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.sales.toLocaleString('pt-BR')}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.views.toLocaleString('pt-BR')}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.clicks.toLocaleString('pt-BR')}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div className="flex items-center justify-end gap-4">
+                                                <button onClick={() => handleEditMetric(metric)} className="text-primary-400 hover:text-primary-300">Editar</button>
+                                                <button onClick={() => handleDeleteMetric(metric.id)} className="text-red-400 hover:text-red-300">Excluir</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <p className="text-gray-400 text-center py-4">Nenhum registro nas últimas 24 horas.</p>
+                )}
             </div>
 
             <div className="bg-white p-4 sm:p-6 rounded-lg">
@@ -403,7 +512,7 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
                 </div>
             </div>
 
-             {isMetricModalOpen && <DailyMetricFormModal onSave={handleSaveMetric} onClose={() => setIsMetricModalOpen(false)} accounts={uniqueAccounts} />}
+             {isMetricModalOpen && <DailyMetricFormModal onSave={handleSaveMetric} onClose={handleCloseModal} accounts={uniqueAccounts} metricToEdit={editingMetric} />}
         </div>
     );
 };
@@ -453,10 +562,6 @@ const PostControl: React.FC<{ user: User; logout: () => void; posts: Post[]; set
         return posts
             .map(p => ({ ...p, derivedStatus: getStatus(p) }))
             .filter(p => {
-                // The date string 'YYYY-MM-DD' from the input is timezone-agnostic.
-                // We must treat it as a date in the user's local timezone for correct filtering.
-                // `new Date(p.date)` or `parseISO(p.date)` would create it at UTC midnight, 
-                // which can be the previous day in some timezones.
                 const [year, month, day] = p.date.split('-').map(Number);
                 const postDate = new Date(year, month - 1, day);
 
