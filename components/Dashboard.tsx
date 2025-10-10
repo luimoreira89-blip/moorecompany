@@ -171,7 +171,11 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
     
     const filteredMetrics = useMemo(() => {
         return dailyMetrics.filter(m => {
-            const metricDate = new Date(m.date);
+            // The date string 'YYYY-MM-DD' is timezone-agnostic.
+            // We treat it as a local date to avoid timezone conversion issues.
+            const [year, month, day] = m.date.split('-').map(Number);
+            const metricDate = new Date(year, month - 1, day);
+            
             const inDateRange = metricDate >= dateRange.start && metricDate <= dateRange.end;
             const matchesAccount = accountFilter === 'Todos' || m.account === accountFilter;
             return inDateRange && matchesAccount;
@@ -234,18 +238,22 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
             if (start > end) return [];
 
             const metricsInDateRange = dailyMetrics.filter(m => {
-                const metricDate = parseISO(m.date);
+                const [year, month, day] = m.date.split('-').map(Number);
+                const metricDate = new Date(year, month - 1, day);
                 return metricDate >= start && metricDate <= end;
             });
 
             const groupedByDay = metricsInDateRange.reduce((acc, metric) => {
-                const day = format(parseISO(metric.date), 'dd/MM');
-                if (!acc[day]) {
-                    acc[day] = { gmv: 0, lucro: 0, views: 0 };
+                const [year, month, day] = metric.date.split('-').map(Number);
+                const metricDate = new Date(year, month - 1, day);
+                const dayStr = format(metricDate, 'dd/MM');
+                
+                if (!acc[dayStr]) {
+                    acc[dayStr] = { gmv: 0, lucro: 0, views: 0 };
                 }
-                acc[day].gmv += metric.gmv || 0;
-                acc[day].lucro += metric.lucro || 0;
-                acc[day].views += metric.views || 0;
+                acc[dayStr].gmv += metric.gmv || 0;
+                acc[dayStr].lucro += metric.lucro || 0;
+                acc[dayStr].views += metric.views || 0;
                 return acc;
             }, {} as Record<string, { gmv: number; lucro: number; views: number }>);
 
