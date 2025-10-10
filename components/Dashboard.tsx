@@ -7,8 +7,14 @@ import PostTable from './PostTable';
 import PostFormModal from './PostFormModal';
 import AnalyticsChart from './AnalyticsChart';
 import { isValidDriveLink } from '../utils/postUtils';
-// FIX: Import date-fns functions from the main package to resolve module export errors.
-import { parseISO, startOfDay, endOfDay, subDays, format, eachDayOfInterval, subHours } from 'date-fns';
+// FIX: Import date-fns functions from their specific paths to resolve module export errors.
+import parseISO from 'date-fns/parseISO';
+import startOfDay from 'date-fns/startOfDay';
+import endOfDay from 'date-fns/endOfDay';
+import subDays from 'date-fns/subDays';
+import format from 'date-fns/format';
+import eachDayOfInterval from 'date-fns/eachDayOfInterval';
+import subHours from 'date-fns/subHours';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 
 
