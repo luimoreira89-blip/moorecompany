@@ -22,8 +22,15 @@ export const AuthContext = React.createContext<{
     register: (user: User) => boolean;
 } | null>(null);
 
+type AuthUser = { uid: string; email?: string; displayName?: string; photoURL?: string } | null;
+type AuthState = { loggedIn: boolean; user: AuthUser };
 
-const App: React.FC = () => {
+interface AppProps {
+  authState?: AuthState;
+}
+
+
+const App: React.FC<AppProps> = ({ authState }) => {
     const [users, setUsers] = useLocalStorage<User[]>('users', []);
     const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
 

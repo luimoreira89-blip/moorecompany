@@ -8,13 +8,13 @@ import PostFormModal from './PostFormModal';
 import AnalyticsChart from './AnalyticsChart';
 import { isValidDriveLink } from '../utils/postUtils';
 // FIX: Import date-fns functions from their specific paths to resolve module export errors.
-import parseISO from 'date-fns/parseISO';
-import startOfDay from 'date-fns/startOfDay';
-import endOfDay from 'date-fns/endOfDay';
-import subDays from 'date-fns/subDays';
-import format from 'date-fns/format';
-import eachDayOfInterval from 'date-fns/eachDayOfInterval';
-import subHours from 'date-fns/subHours';
+import { default as parseISO } from 'date-fns/parseISO';
+import { default as startOfDay } from 'date-fns/startOfDay';
+import { default as endOfDay } from 'date-fns/endOfDay';
+import { default as subDays } from 'date-fns/subDays';
+import { default as format } from 'date-fns/format';
+import { default as eachDayOfInterval } from 'date-fns/eachDayOfInterval';
+import { default as subHours } from 'date-fns/subHours';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 
 

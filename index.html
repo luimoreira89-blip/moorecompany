@@ -62,12 +62,14 @@
 <body class="bg-gray-900">
   <div id="root"></div>
 
+  <!-- BEGIN ADD: Google Auth buttons -->
   <button id="btnGoogle">Entrar com Google</button>
   <button id="btnLogout" style="display:none">Sair</button>
+  <!-- END ADD -->
   
   <script type="module" src="/index.tsx"></script>
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { 
       getAuth, 
       onAuthStateChanged, 
@@ -102,7 +104,7 @@ console.log("API KEY ATIVA:", firebaseConfig.apiKey);
 
 
 
-    const app = initializeApp(firebaseConfig);
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     let unsubscribeUserWatcher = null;
@@ -136,16 +138,14 @@ console.log("API KEY ATIVA:", firebaseConfig.apiKey);
 
     getRedirectResult(auth)
       .then((result) => {
-        if (result) {
+        if (result?.user) {
           alert("✅ Login realizado com sucesso!");
         }
       })
-      .catch(error => {
-        if (error) { 
-          console.error("Erro em getRedirectResult:", error);
-          alert(`❌ Falha no login por redirecionamento: ${error.message}`);
-        }
-    });
+      .catch((error) => {
+        console.error("Erro em getRedirectResult:", error);
+        alert(`❌ Falha no login por redirecionamento: ${error.message}`);
+      });
 
     onAuthStateChanged(auth, user => {
       const btnG = document.getElementById('btnGoogle');
@@ -270,7 +270,7 @@ console.log("API KEY ATIVA:", firebaseConfig.apiKey);
       return Promise.reject("No user logged in.");
     };
 
-    // Attach event listeners for the new global buttons
+    // Liga os botões globais
     document.getElementById('btnGoogle')?.addEventListener('click', window.signInWithGoogle);
     document.getElementById('btnLogout')?.addEventListener('click', () => signOut(auth));
   </script>
