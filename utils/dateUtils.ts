@@ -1,4 +1,5 @@
 import { Post, Status, Period } from '../types';
+// FIX: Import date-fns functions and locale from their specific paths to resolve module export errors.
 import { startOfDay, endOfDay, isBefore, format, parseISO, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 

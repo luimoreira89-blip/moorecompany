@@ -3,6 +3,7 @@ import { Post } from '../types';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList
 } from 'recharts';
+// FIX: Import date-fns functions and locale from their specific paths to resolve module export errors.
 import { format, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 

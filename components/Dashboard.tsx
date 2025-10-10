@@ -1,17 +1,26 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Post, User, Status, Period, Format } from '../types';
-import { useLocalStorage } from '../hooks/useLocalStorage';
 import { getPeriodRange, getStatus } from '../utils/dateUtils';
 import PostTable from './PostTable';
 import PostFormModal from './PostFormModal';
 import AnalyticsChart from './AnalyticsChart';
 import { isValidDriveLink } from '../utils/postUtils';
+// FIX: Import date-fns functions from the main package to resolve module export errors.
 import { parseISO, startOfDay, endOfDay, subDays, format, eachDayOfInterval, subHours } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 
 
 // --- SUB-COMPONENTS --- //
+declare global {
+    interface Window {
+        watchUserSubcollection: (collectionName: string, callback: (data: any[]) => void) => () => void;
+        addUserSubcollectionDoc: (collectionName: string, data: any) => Promise<any>;
+        updateUserSubcollectionDoc: (collectionName: string, docId: string, data: any) => Promise<void>;
+        deleteUserSubcollectionDoc: (collectionName: string, docId: string) => Promise<void>;
+    }
+}
 
 const Sidebar: React.FC<{ currentPage: string; setCurrentPage: (page: string) => void; }> = ({ currentPage, setCurrentPage }) => {
   const navItems = [
@@ -166,8 +175,7 @@ const DailyMetricFormModal: React.FC<{
 };
 
 
-const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]; }> = ({ user, logout, posts }) => {
-    const [dailyMetrics, setDailyMetrics] = useLocalStorage<DailyMetric[]>(`metrics_${user.username}`, []);
+const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]; dailyMetrics: DailyMetric[]; }> = ({ user, logout, posts, dailyMetrics }) => {
     const [isMetricModalOpen, setIsMetricModalOpen] = useState(false);
     const [editingMetric, setEditingMetric] = useState<DailyMetric | null>(null);
     const [period, setPeriod] = useState<Period>(Period.Last7Days);
@@ -236,14 +244,9 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
 
     const handleSaveMetric = (metricData: Omit<DailyMetric, 'createdAt'> & { id?: string }) => {
         if (metricData.id) { // Editing
-            setDailyMetrics(prev => prev.map(m => m.id === metricData.id ? { ...m, ...metricData } as DailyMetric : m));
+            window.updateUserSubcollectionDoc('dailyMetrics', metricData.id, metricData);
         } else { // Creating
-            const newMetric: DailyMetric = {
-                ...(metricData as Omit<DailyMetric, 'id' | 'createdAt'>),
-                id: Date.now().toString(),
-                createdAt: new Date().toISOString(),
-            };
-            setDailyMetrics(prev => [...prev, newMetric]);
+            window.addUserSubcollectionDoc('dailyMetrics', metricData);
         }
         setIsMetricModalOpen(false);
         setEditingMetric(null);
@@ -256,7 +259,7 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
 
     const handleDeleteMetric = (id: string) => {
         if (window.confirm('Tem certeza que deseja excluir este registro? A ação é irreversível.')) {
-            setDailyMetrics(prev => prev.filter(m => m.id !== id));
+            window.deleteUserSubcollectionDoc('dailyMetrics', id);
         }
     };
     
@@ -518,7 +521,7 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
 };
 
 
-const PostControl: React.FC<{ user: User; logout: () => void; posts: Post[]; setPosts: React.Dispatch<React.SetStateAction<Post[]>> }> = ({ user, logout, posts, setPosts }) => {
+const PostControl: React.FC<{ user: User; logout: () => void; posts: Post[] }> = ({ user, logout, posts }) => {
     const [period, setPeriod] = useState<Period>(Period.Last7Days);
     const todayStr = new Date().toISOString().split('T')[0];
     const [customStartDate, setCustomStartDate] = useState(todayStr);
@@ -535,13 +538,24 @@ const PostControl: React.FC<{ user: User; logout: () => void; posts: Post[]; set
 
     const handleAddPost = () => { setEditingPost(null); setIsModalOpen(true); };
     const handleEditPost = (post: Post) => { setEditingPost(post); setIsModalOpen(true); };
-    const handleDeletePost = (id: string) => { if (window.confirm('Tem certeza?')) { setPosts(posts.filter(p => p.id !== id)); } };
-    const handleSavePost = (post: Post) => {
-        if (post.id) { setPosts(posts.map(p => p.id === post.id ? post : p)); } 
-        else { setPosts([...posts, { ...post, id: Date.now().toString() }]); }
-        setIsModalOpen(false); setEditingPost(null);
+    const handleDeletePost = (id: string) => { 
+        if (window.confirm('Tem certeza? A exclusão é permanente.')) { 
+            window.deleteUserSubcollectionDoc('posts', id); 
+        } 
     };
-    const setPostedState = (id: string, isPosted: boolean) => { setPosts(posts.map(p => p.id === id ? { ...p, isPosted, postedAt: isPosted ? new Date().toISOString() : undefined } : p)); };
+    const handleSavePost = (post: Post) => {
+        if (post.id) { 
+            window.updateUserSubcollectionDoc('posts', post.id, post);
+        } else { 
+            window.addUserSubcollectionDoc('posts', post);
+        }
+        setIsModalOpen(false); 
+        setEditingPost(null);
+    };
+    const setPostedState = (id: string, isPosted: boolean) => {
+        const dataToUpdate = { isPosted, postedAt: isPosted ? new Date().toISOString() : null };
+        window.updateUserSubcollectionDoc('posts', id, dataToUpdate);
+    };
     
     const dateRange = useMemo(() => {
         if (period === Period.Custom) {
@@ -688,15 +702,59 @@ const PostControl: React.FC<{ user: User; logout: () => void; posts: Post[]; set
 interface DashboardProps { user: User; logout: () => void; }
 
 const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
-    const [posts, setPosts] = useLocalStorage<Post[]>(`posts_${user.uid || user.username}`, []);
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState('metrics');
+
+    useEffect(() => {
+        if (!user?.uid) {
+            setIsLoading(false);
+            return;
+        }
+
+        setIsLoading(true);
+        let postLoaded = false;
+        let metricsLoaded = false;
+
+        const checkDoneLoading = () => {
+            if (postLoaded && metricsLoaded) {
+                setIsLoading(false);
+            }
+        };
+
+        const unsubscribePosts = window.watchUserSubcollection('posts', (data) => {
+            setPosts(data as Post[]);
+            postLoaded = true;
+            checkDoneLoading();
+        });
+
+        const unsubscribeMetrics = window.watchUserSubcollection('dailyMetrics', (data) => {
+            setDailyMetrics(data as DailyMetric[]);
+            metricsLoaded = true;
+            checkDoneLoading();
+        });
+        
+        return () => {
+            unsubscribePosts();
+            unsubscribeMetrics();
+        };
+    }, [user?.uid]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-900">
+                <div className="text-white text-lg">Carregando dados...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen">
             <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
             <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-900 text-gray-200 overflow-y-auto">
-                {currentPage === 'metrics' && <MetricsDashboard user={user} logout={logout} posts={posts} />}
-                {currentPage === 'posts' && <PostControl user={user} logout={logout} posts={posts} setPosts={setPosts} />}
+                {currentPage === 'metrics' && <MetricsDashboard user={user} logout={logout} posts={posts} dailyMetrics={dailyMetrics} />}
+                {currentPage === 'posts' && <PostControl user={user} logout={logout} posts={posts} />}
             </main>
         </div>
     );

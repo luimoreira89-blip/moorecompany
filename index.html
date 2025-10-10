@@ -61,6 +61,10 @@
 </head>
 <body class="bg-gray-900">
   <div id="root"></div>
+
+  <button id="loginGoogle">Entrar com Google</button>
+  <button id="logout">Sair</button>
+  
   <script type="module" src="/index.tsx"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -78,7 +82,11 @@
       doc, 
       setDoc, 
       serverTimestamp,
-      onSnapshot
+      onSnapshot,
+      collection,
+      addDoc,
+      updateDoc,
+      deleteDoc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -102,25 +110,41 @@ console.log("API KEY ATIVA:", firebaseConfig.apiKey);
     // --- Authentication ---
     const provider = new GoogleAuthProvider();
 
-    window.signInWithGoogle = () => {
-      signInWithPopup(auth, provider).catch((error) => {
-        if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
-          signInWithRedirect(auth, provider);
+    window.signInWithGoogle = async () => {
+      try {
+        await signInWithPopup(auth, provider);
+        alert("✅ Login realizado com sucesso!");
+      } catch (error) {
+        if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request' || error.code === 'auth/operation-not-supported-in-this-environment') {
+          await signInWithRedirect(auth, provider);
         } else {
           console.error("Login com popup falhou:", error);
-          alert(`Falha no login: ${error.message}`);
+          alert(`❌ Falha no login: ${error.message}`);
         }
-      });
+      }
     };
     
-    window.signOutFirebase = () => {
-        signOut(auth).catch(error => {
+    window.signOutFirebase = async () => {
+        try {
+            await signOut(auth);
+            alert("Você saiu da conta.");
+        } catch (error) {
             console.error("Erro ao sair:", error);
-        });
+            alert(`❌ Falha ao sair: ${error.message}`);
+        }
     };
 
-    getRedirectResult(auth).catch(error => {
-      console.error("Erro em getRedirectResult:", error);
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          alert("✅ Login realizado com sucesso!");
+        }
+      })
+      .catch(error => {
+        if (error) { 
+          console.error("Erro em getRedirectResult:", error);
+          alert(`❌ Falha no login por redirecionamento: ${error.message}`);
+        }
     });
 
     onAuthStateChanged(auth, user => {
@@ -159,7 +183,7 @@ console.log("API KEY ATIVA:", firebaseConfig.apiKey);
       }
     });
 
-    // --- Firestore Utilities ---
+    // --- Firestore Profile Utilities ---
     window.saveUserData = (partialData) => {
       const user = auth.currentUser;
       if (user) {
@@ -181,6 +205,65 @@ console.log("API KEY ATIVA:", firebaseConfig.apiKey);
       return () => {}; // Retorna uma função vazia para evitar erros
     };
 
+    // --- Firestore Subcollection Generic Utilities ---
+
+    window.watchUserSubcollection = (collectionName, callback) => {
+      const user = auth.currentUser;
+      if (user) {
+        const collectionRef = collection(db, "users", user.uid, collectionName);
+        return onSnapshot(collectionRef, (querySnapshot) => {
+          const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          // Firestore Timestamps to ISOString for easier handling in JS
+          const processedData = data.map(item => {
+            for (const key in item) {
+              if (item[key] && typeof item[key].toDate === 'function') {
+                item[key] = item[key].toDate().toISOString();
+              }
+            }
+            return item;
+          });
+          callback(processedData);
+        }, (error) => {
+          console.error(`Error watching ${collectionName}:`, error);
+        });
+      }
+      console.warn(`watchUserSubcollection (${collectionName}) called without user.`);
+      return () => {};
+    };
+
+    window.addUserSubcollectionDoc = (collectionName, data) => {
+      const user = auth.currentUser;
+      if (user) {
+        const collectionRef = collection(db, "users", user.uid, collectionName);
+        const { id, ...docData } = data; // Don't save our own id field
+        docData.createdAt = serverTimestamp();
+        return addDoc(collectionRef, docData);
+      }
+      return Promise.reject("No user logged in.");
+    };
+
+    window.updateUserSubcollectionDoc = (collectionName, docId, data) => {
+      const user = auth.currentUser;
+      if (user) {
+        const docRef = doc(db, "users", user.uid, collectionName, docId);
+        const { id, ...docData } = data; // Don't save our own id field
+        return setDoc(docRef, docData, { merge: true });
+      }
+      return Promise.reject("No user logged in.");
+    };
+
+    window.deleteUserSubcollectionDoc = (collectionName, docId) => {
+      const user = auth.currentUser;
+      if (user) {
+        const docRef = doc(db, "users", user.uid, collectionName, docId);
+        return deleteDoc(docRef);
+      }
+      return Promise.reject("No user logged in.");
+    };
+
+    // Attach event listeners for the new global buttons
+    document.getElementById("loginGoogle")?.addEventListener("click", window.signInWithGoogle);
+    document.getElementById("logout")?.addEventListener("click", window.signOutFirebase);
   </script>
 </body>
 </html>
