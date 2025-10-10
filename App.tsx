@@ -1,9 +1,19 @@
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { User } from './types';
 import AuthPage from './components/AuthPage';
 import Dashboard from './components/Dashboard';
 import { useLocalStorage } from './hooks/useLocalStorage';
+
+declare global {
+    interface Window {
+        signInWithGoogle: () => void;
+        signOutFirebase: () => void;
+        saveUserData: (data: Partial<User>) => Promise<void>;
+        watchUserData: (callback: (data: User | {}) => void) => () => void;
+    }
+}
+
 
 export const AuthContext = React.createContext<{
     user: User | null;
@@ -27,8 +37,14 @@ const App: React.FC = () => {
     }, [users, setCurrentUser]);
 
     const logout = useCallback(() => {
+        // Se for um usuário Firebase (tem uid), desloga do Firebase
+        if (currentUser?.uid) {
+            window.signOutFirebase();
+        }
+        // Limpa o usuário local para todos os casos
         setCurrentUser(null);
-    }, [setCurrentUser]);
+    }, [setCurrentUser, currentUser]);
+
 
     const register = useCallback((user: User): boolean => {
         const userExists = users.some(u => u.username === user.username);
@@ -38,6 +54,32 @@ const App: React.FC = () => {
         setUsers(prevUsers => [...prevUsers, user]);
         return true;
     }, [users, setUsers]);
+
+     useEffect(() => {
+        const handleAuthStateChange = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            const { loggedIn, user: firebaseUser } = customEvent.detail;
+            
+            if (loggedIn) {
+                // Seta o usuário no estado do React
+                setCurrentUser({
+                    username: firebaseUser.displayName || firebaseUser.email,
+                    ...firebaseUser
+                });
+            } else {
+                // Se o usuário atual for do Firebase (tem uid), limpa ele
+                if (currentUser?.uid) {
+                    setCurrentUser(null);
+                }
+            }
+        };
+
+        window.addEventListener('firebase-auth-state-changed', handleAuthStateChange);
+        return () => {
+            window.removeEventListener('firebase-auth-state-changed', handleAuthStateChange);
+        };
+    }, [setCurrentUser, currentUser]);
+
 
     const authContextValue = useMemo(() => ({
         user: currentUser,

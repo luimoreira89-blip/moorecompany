@@ -62,5 +62,122 @@
 <body class="bg-gray-900">
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getAuth, 
+      onAuthStateChanged, 
+      GoogleAuthProvider, 
+      signInWithPopup, 
+      signInWithRedirect, 
+      getRedirectResult,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      serverTimestamp,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyDh_EX_TlAUyhlZ0o6HjYNclsRPPLXkjyg",
+  authDomain: "dashrare-e93be.firebaseapp.com",
+  projectId: "dashrare-e93be",
+  storageBucket: "dashrare-e93be.appspot.com",
+  messagingSenderId: "248787584417",
+  appId: "1:248787584417:web:341cb53f61f1c18199b7e0"
+};
+
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    let unsubscribeUserWatcher = null;
+
+    // --- Authentication ---
+    const provider = new GoogleAuthProvider();
+
+    window.signInWithGoogle = () => {
+      signInWithPopup(auth, provider).catch((error) => {
+        if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+          signInWithRedirect(auth, provider);
+        } else {
+          console.error("Login com popup falhou:", error);
+          alert(`Falha no login: ${error.message}`);
+        }
+      });
+    };
+    
+    window.signOutFirebase = () => {
+        signOut(auth).catch(error => {
+            console.error("Erro ao sair:", error);
+        });
+    };
+
+    getRedirectResult(auth).catch(error => {
+      console.error("Erro em getRedirectResult:", error);
+    });
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        console.log("Usuário logado (Firebase):", user.uid);
+        const userRef = doc(db, "users", user.uid);
+        const userData = {
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            lastLoginAt: serverTimestamp()
+        };
+        setDoc(userRef, userData, { merge: true });
+
+        window.dispatchEvent(new CustomEvent('firebase-auth-state-changed', {
+          detail: { loggedIn: true, user: { uid: user.uid, email: user.email, displayName: user.displayName, photoURL: user.photoURL } }
+        }));
+
+        // Inicia o listener de dados do usuário e loga as mudanças
+        unsubscribeUserWatcher = window.watchUserData(data => {
+            console.log("Dados do usuário (Firestore):", data);
+        });
+        
+        console.log("Indicando onde carregar dados do usuário no dashboard...");
+
+      } else {
+        console.log("Usuário deslogado (Firebase).");
+        if (unsubscribeUserWatcher) {
+            console.log("Interrompendo listener de dados do usuário.");
+            unsubscribeUserWatcher();
+            unsubscribeUserWatcher = null;
+        }
+        window.dispatchEvent(new CustomEvent('firebase-auth-state-changed', {
+          detail: { loggedIn: false, user: null }
+        }));
+      }
+    });
+
+    // --- Firestore Utilities ---
+    window.saveUserData = (partialData) => {
+      const user = auth.currentUser;
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
+        return setDoc(userRef, partialData, { merge: true });
+      }
+      return Promise.reject("Nenhum usuário logado.");
+    };
+
+    window.watchUserData = (callback) => {
+      const user = auth.currentUser;
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
+        return onSnapshot(userRef, snap => {
+          callback(snap.data() || {});
+        });
+      }
+      console.warn("watchUserData chamado sem usuário logado.");
+      return () => {}; // Retorna uma função vazia para evitar erros
+    };
+
+  </script>
 </body>
 </html>

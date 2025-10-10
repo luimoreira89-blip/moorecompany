@@ -86,7 +86,8 @@ const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }
     const groupedPosts = React.useMemo(() => {
         if (!groupByAccount) return null;
         // Fix: Use a generic argument for reduce to strongly type the accumulator.
-        return posts.reduce<Record<string, GroupedData>>((acc, post) => {
+        // FIX: Explicitly type the accumulator (`acc`) to fix type inference issues with `reduce`.
+        return posts.reduce((acc: Record<string, GroupedData>, post) => {
             const account = post.account || 'Sem Conta';
             if (!acc[account]) {
                 acc[account] = { posts: [], stats: { posted: 0, pending: 0, overdue: 0 }};
@@ -116,24 +117,28 @@ const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-700">
+                    {/* FIX: Replace `Object.entries` with `Object.keys` to ensure `data` is correctly typed and prevent "property does not exist on type 'unknown'" errors. */}
                     {groupedPosts ? (
-                        Object.entries(groupedPosts).map(([account, data]) => (
-                            <React.Fragment key={account}>
-                                <tr className="bg-gray-900">
-                                    <td colSpan={totalColumns} className="px-4 py-3 text-sm font-bold text-primary-300">
-                                        <div className="flex justify-between items-center">
-                                            <span>{account}</span>
-                                            <div className="flex gap-4 text-xs font-normal">
-                                                <span className="text-green-400">Postados: {data.stats.posted}</span>
-                                                <span className="text-orange-400">Pendentes: {data.stats.pending}</span>
-                                                <span className="text-red-400">Atrasados: {data.stats.overdue}</span>
+                        Object.keys(groupedPosts).map((account) => {
+                            const data = groupedPosts[account];
+                            return (
+                                <React.Fragment key={account}>
+                                    <tr className="bg-gray-900">
+                                        <td colSpan={totalColumns} className="px-4 py-3 text-sm font-bold text-primary-300">
+                                            <div className="flex justify-between items-center">
+                                                <span>{account}</span>
+                                                <div className="flex gap-4 text-xs font-normal">
+                                                    <span className="text-green-400">Postados: {data.stats.posted}</span>
+                                                    <span className="text-orange-400">Pendentes: {data.stats.pending}</span>
+                                                    <span className="text-red-400">Atrasados: {data.stats.overdue}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {data.posts.map(post => <PostRow key={post.id} post={post} {...props} />)}
-                            </React.Fragment>
-                        ))
+                                        </td>
+                                    </tr>
+                                    {data.posts.map(post => <PostRow key={post.id} post={post} {...props} />)}
+                                </React.Fragment>
+                            );
+                        })
                     ) : (
                         posts.map(post => <PostRow key={post.id} post={post} {...props} />)
                     )}

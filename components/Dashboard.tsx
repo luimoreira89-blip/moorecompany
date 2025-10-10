@@ -355,8 +355,8 @@ const MetricsDashboard: React.FC<{ user: User; logout: () => void; posts: Post[]
                         <span className="text-sm font-semibold text-white">{formatCurrency(metrics.gmv)} / {formatCurrency(gmvGoal)}</span>
                     </div>
                      <div className="text-right">
-                        <p className="text-white font-medium text-sm">{user.username}</p>
-                         <button onClick={logout} className="text-xs text-primary-400 hover:text-primary-300">Sair</button>
+                        <p className="text-white font-medium text-sm">{user.displayName || user.username}</p>
+                         <button id="btnLogout" onClick={logout} className="text-xs text-primary-400 hover:text-primary-300">Sair</button>
                     </div>
                 </div>
             </header>
@@ -599,8 +599,8 @@ const PostControl: React.FC<{ user: User; logout: () => void; posts: Post[]; set
              <header className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-white">Performance de Conteúdo</h1>
                 <div className="text-right">
-                    <p className="text-white text-sm">{user.username}</p>
-                    <button onClick={logout} className="text-xs font-medium text-primary-400 hover:text-primary-300">Sair</button>
+                    <p className="text-white text-sm">{user.displayName || user.username}</p>
+                    <button id="btnLogout" onClick={logout} className="text-xs font-medium text-primary-400 hover:text-primary-300">Sair</button>
                 </div>
             </header>
             
@@ -688,7 +688,7 @@ const PostControl: React.FC<{ user: User; logout: () => void; posts: Post[]; set
 interface DashboardProps { user: User; logout: () => void; }
 
 const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
-    const [posts, setPosts] = useLocalStorage<Post[]>(`posts_${user.username}`, []);
+    const [posts, setPosts] = useLocalStorage<Post[]>(`posts_${user.uid || user.username}`, []);
     const [currentPage, setCurrentPage] = useState('metrics');
 
     return (

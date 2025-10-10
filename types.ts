@@ -38,4 +38,8 @@ export interface Post {
 export interface User {
     username: string;
     password?: string;
+    uid?: string;
+    email?: string;
+    displayName?: string;
+    photoURL?: string;
 }

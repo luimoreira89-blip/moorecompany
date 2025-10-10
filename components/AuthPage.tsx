@@ -55,8 +55,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ login, register }) => {
 
     return (
         <div className="flex items-center justify-center min-h-screen w-full" style={backgroundStyle}>
-            <div className="w-full max-w-md p-8 space-y-8 bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-2xl border border-primary-800/60">
-                <div className="text-center mb-8">
+            <div className="w-full max-w-md p-8 space-y-6 bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-2xl border border-primary-800/60">
+                <div className="text-center mb-6">
                      <img src="https://iili.io/Kw8h2El.png" alt="Utmify Logo" className="h-28 w-auto mx-auto" />
                     <h2 className="text-2xl text-white mt-4">Análise de Métricas - TikTok Shop</h2>
                 </div>
@@ -75,7 +75,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ login, register }) => {
                     </button>
                 </div>
 
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
                     {error && <p className="text-red-400 text-center bg-red-900/50 p-3 rounded-md">{error}</p>}
                     {success && <p className="text-green-400 text-center bg-green-900/50 p-3 rounded-md">{success}</p>}
                     
@@ -116,6 +116,25 @@ const AuthPage: React.FC<AuthPageProps> = ({ login, register }) => {
                         </button>
                     </div>
                 </form>
+
+                <div className="relative flex items-center justify-center my-4">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-700"></div>
+                    </div>
+                    <div className="relative px-2 bg-gray-900/70 text-sm text-gray-400">OU</div>
+                </div>
+
+                <div>
+                    <button
+                        id="btnGoogle"
+                        type="button"
+                        onClick={() => window.signInWithGoogle()}
+                        className="group relative w-full flex justify-center items-center py-3 px-4 border border-gray-600 text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-primary-500 transition-colors"
+                    >
+                         <svg className="w-5 h-5 mr-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 74.8C307.7 99.8 280.7 86 248 86c-84.3 0-152.3 68.2-152.3 152S163.7 390 248 390c47.1 0 89.6-22.3 117.2-57.2H248v-87.7h239.8c4.3 23.6 6.2 47.8 6.2 73.5z"></path></svg>
+                        Entrar com Google
+                    </button>
+                </div>
             </div>
         </div>
     );
