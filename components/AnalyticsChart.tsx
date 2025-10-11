@@ -128,7 +128,7 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ allPosts }) => {
               labelStyle={{ color: '#E2E8F0' }}
             />
             <Legend wrapperStyle={{ color: '#E2E8F0' }} />
-            <Line type="monotone" dataKey="Postagens" stroke="#22c55e" strokeWidth={2}>
+            <Line type="monotone" dataKey="Postagens" stroke="#0ea5e9" strokeWidth={2}>
                  <LabelList dataKey="Postagens" position="top" style={{ fill: '#e2e8f0', fontSize: '12px' }} />
             </Line>
           </LineChart>

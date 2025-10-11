@@ -72,7 +72,7 @@ const App: React.FC<AppProps> = ({ authState }) => {
 
     return (
         <AuthContext.Provider value={authContextValue}>
-            <div className="min-h-screen bg-gray-900 text-gray-200">
+            <div className="min-h-screen bg-black text-gray-200">
                 {currentUser ? <Dashboard user={currentUser} logout={logout} /> : <AuthPage />}
             </div>
         </AuthContext.Provider>

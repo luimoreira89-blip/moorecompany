@@ -11,9 +11,11 @@ export enum Format {
 }
 
 export enum Period {
+    All = 'Todo o período',
     Today = 'Hoje',
     Yesterday = 'Ontem',
     Last7Days = 'Últimos 7 dias',
+    Last15Days = 'Últimos 15 dias',
     Last30Days = 'Últimos 30 dias',
     Custom = 'Personalizado'
 }

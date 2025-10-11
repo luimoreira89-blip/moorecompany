@@ -5,12 +5,11 @@ import { Post, User, Status, Period, Format } from '../types';
 import { getPeriodRange, getStatus } from '../utils/dateUtils';
 import PostTable from './PostTable';
 import PostFormModal from './PostFormModal';
-import AnalyticsChart from './AnalyticsChart';
 import { isValidDriveLink } from '../utils/postUtils';
 // Fix: Consolidate date-fns imports to resolve module resolution errors.
 import { parseISO, startOfDay, endOfDay, format, eachDayOfInterval } from 'date-fns';
-// Fix: Add missing `Legend` import from recharts.
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
+// Fix: Add missing imports from recharts for the new line chart.
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
 import PostBoard from './PostBoard';
 
 
@@ -31,7 +30,7 @@ const Sidebar: React.FC<{ currentPage: string; setCurrentPage: (page: string) =>
   ];
 
   return (
-    <div className="w-60 bg-gray-800 p-4 flex-col hidden sm:flex border-r border-gray-700">
+    <div className="w-60 bg-gray-900 p-4 flex-col hidden sm:flex border-r border-gray-800">
       <div className="mb-10 text-center h-24 flex items-center justify-center">
          <img src="https://iili.io/Kw8h2El.png" alt="Utmify Logo" className="h-20 w-auto" />
       </div>
@@ -43,7 +42,7 @@ const Sidebar: React.FC<{ currentPage: string; setCurrentPage: (page: string) =>
             className={`px-4 py-2.5 text-left rounded-md text-sm font-medium transition-colors ${
               currentPage === item.id
                 ? 'bg-primary-600 text-white'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
             }`}
           >
             {item.label}
@@ -55,7 +54,7 @@ const Sidebar: React.FC<{ currentPage: string; setCurrentPage: (page: string) =>
 };
 
 const KpiCard: React.FC<{ title: string; value: string; }> = ({ title, value }) => (
-    <div className="bg-gray-800/50 border border-gray-700 p-5 rounded-lg">
+    <div className="bg-gray-900/50 border border-gray-800 p-5 rounded-lg">
         <h3 className="text-gray-400 text-sm font-medium">{title}</h3>
         <p className="text-3xl font-bold text-white mt-2">{value}</p>
     </div>
@@ -130,44 +129,44 @@ const DailyMetricFormModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
-            <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-primary-800 max-h-full overflow-y-auto">
+            <div className="bg-gray-900 rounded-lg shadow-xl p-6 w-full max-w-lg border border-primary-800 max-h-full overflow-y-auto">
                 <h2 className="text-2xl font-bold text-white mb-4">{metricToEdit ? 'Editar Registro' : 'Adicionar Registro Diário'}</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="date" className="block text-sm font-medium text-gray-300">Data *</label>
-                            <input type="date" name="date" value={formData.date} onChange={handleChange} required className="mt-1 block w-full bg-gray-900 border border-gray-600 rounded-md py-2 px-3 text-white" />
+                            <input type="date" name="date" value={formData.date} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                         <div>
                             <label htmlFor="account-metric" className="block text-sm font-medium text-gray-300">Conta *</label>
-                            <input type="text" name="account" id="account-metric" list="accounts-list-metric" value={formData.account} onChange={handleChange} required placeholder="@nome_da_conta" className="mt-1 block w-full bg-gray-900 border border-gray-600 rounded-md py-2 px-3 text-white" />
+                            <input type="text" name="account" id="account-metric" list="accounts-list-metric" value={formData.account} onChange={handleChange} required placeholder="@nome_da_conta" className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                             <datalist id="accounts-list-metric">
                                 {accounts.map(acc => <option key={acc} value={acc} />)}
                             </datalist>
                         </div>
                          <div>
                            <label htmlFor="gmv" className="block text-sm font-medium text-gray-300">GMV (R$)</label>
-                           <input type="number" step="0.01" name="gmv" value={formData.gmv} onChange={handleChange} required className="mt-1 block w-full bg-gray-900 border border-gray-600 rounded-md py-2 px-3 text-white" />
+                           <input type="number" step="0.01" name="gmv" value={formData.gmv} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                          <div>
                            <label htmlFor="lucro" className="block text-sm font-medium text-gray-300">Lucro (R$)</label>
-                           <input type="number" step="0.01" name="lucro" value={formData.lucro} onChange={handleChange} required className="mt-1 block w-full bg-gray-900 border border-gray-600 rounded-md py-2 px-3 text-white" />
+                           <input type="number" step="0.01" name="lucro" value={formData.lucro} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                         <div>
                            <label htmlFor="sales" className="block text-sm font-medium text-gray-300">Vendas</label>
-                           <input type="number" step="1" name="sales" value={formData.sales} onChange={handleChange} required className="mt-1 block w-full bg-gray-900 border border-gray-600 rounded-md py-2 px-3 text-white" />
+                           <input type="number" step="1" name="sales" value={formData.sales} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                         <div>
                            <label htmlFor="clicks" className="block text-sm font-medium text-gray-300">Cliques</label>
-                           <input type="number" step="1" name="clicks" value={formData.clicks} onChange={handleChange} required className="mt-1 block w-full bg-gray-900 border border-gray-600 rounded-md py-2 px-3 text-white" />
+                           <input type="number" step="1" name="clicks" value={formData.clicks} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                         <div className="md:col-span-2">
                            <label htmlFor="views" className="block text-sm font-medium text-gray-300">Visualizações</label>
-                           <input type="number" step="1" name="views" value={formData.views} onChange={handleChange} required className="mt-1 block w-full bg-gray-900 border border-gray-600 rounded-md py-2 px-3 text-white" />
+                           <input type="number" step="1" name="views" value={formData.views} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                     </div>
                     <div className="flex justify-end gap-4 pt-4">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 rounded-md">Cancelar</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800 hover:bg-gray-700 rounded-md">Cancelar</button>
                         <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md">Salvar</button>
                     </div>
                 </form>
@@ -181,9 +180,9 @@ const MetricTable: React.FC<{ metrics: DailyMetric[]; onEdit: (metric: DailyMetr
     const sortedMetrics = [...metrics].sort((a, b) => b.date.localeCompare(a.date));
     
     return (
-        <div className="overflow-x-auto bg-gray-800/50 border border-gray-700 rounded-lg">
-            <table className="min-w-full divide-y divide-gray-700">
-                <thead className="bg-gray-800">
+        <div className="overflow-x-auto bg-gray-900/50 border border-gray-800 rounded-lg">
+            <table className="min-w-full divide-y divide-gray-800">
+                <thead className="bg-gray-900">
                     <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Data</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Conta</th>
@@ -195,9 +194,9 @@ const MetricTable: React.FC<{ metrics: DailyMetric[]; onEdit: (metric: DailyMetr
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Ações</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-gray-800">
                     {sortedMetrics.map(metric => (
-                        <tr key={metric.id} className="bg-gray-800 hover:bg-gray-700/50 transition-colors">
+                        <tr key={metric.id} className="bg-gray-900 hover:bg-gray-800/50 transition-colors">
                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{format(parseISO(metric.date), 'dd/MM/yyyy')}</td>
                             <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">{metric.account}</td>
                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">R$ {metric.gmv.toFixed(2)}</td>
@@ -231,9 +230,31 @@ const PlusIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const Header: React.FC<{ user: User; logout: () => void; onAddPost: () => void; onAddMetric: () => void; currentPage: string; }> = ({ user, logout, onAddPost, onAddMetric, currentPage }) => {
+const GmvProgressBar: React.FC<{ current: number; goal: number; }> = ({ current, goal }) => {
+    const percentage = goal > 0 ? (current / goal) * 100 : 0;
+    const formattedCurrent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(current);
+    const formattedGoal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal);
+
     return (
-        <header className="bg-gray-800/50 border-b border-gray-700 p-4 flex justify-between items-center">
+        <div className="flex items-center gap-3 bg-dark-bg/50 px-3 py-1 rounded-lg">
+            <span role="img" aria-label="Medalha">🎖️</span>
+            <em className="text-white font-semibold italic">SEJA RARE</em>
+            <div className="w-48 h-4 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+                <div
+                    className="h-full rounded-full progress-bar-neon"
+                    style={{ width: `${Math.min(percentage, 100)}%` }}
+                    title={`${percentage.toFixed(2)}%`}
+                />
+            </div>
+            <span className="text-white font-mono text-sm">{formattedCurrent} / {formattedGoal}</span>
+        </div>
+    );
+};
+
+
+const Header: React.FC<{ user: User; logout: () => void; onAddPost: () => void; onAddMetric: () => void; currentPage: string; gmvData?: { current: number; goal: number }; }> = ({ user, logout, onAddPost, onAddMetric, currentPage, gmvData }) => {
+    return (
+        <header className="bg-gray-900/50 border-b border-gray-800 p-4 flex justify-between items-center">
             <div>
                 {/* O título da página será renderizado no conteúdo principal agora */}
             </div>
@@ -242,8 +263,11 @@ const Header: React.FC<{ user: User; logout: () => void; onAddPost: () => void; 
                     <PlusIcon className="h-5 w-5" />
                     <span>{currentPage === 'posts' ? 'Adicionar Post' : 'Adicionar Registro'}</span>
                 </button>
+                 {gmvData && (
+                     <GmvProgressBar current={gmvData.current} goal={gmvData.goal} />
+                 )}
                 <div className="flex items-center gap-3">
-                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || user.email}&background=3730a3&color=fff`} alt="User Avatar" className="h-10 w-10 rounded-full" />
+                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || user.email}&background=0c4a6e&color=fff`} alt="User Avatar" className="h-10 w-10 rounded-full" />
                     <div>
                          <p className="font-semibold text-white">{user.displayName || user.username}</p>
                          <p className="text-xs text-gray-400">{user.email}</p>
@@ -254,6 +278,91 @@ const Header: React.FC<{ user: User; logout: () => void; onAddPost: () => void; 
                 </div>
             </div>
         </header>
+    );
+};
+
+const PostStatCard: React.FC<{ title: string; value: number; bgColorClass: string; }> = ({ title, value, bgColorClass }) => (
+    <div className={`${bgColorClass} p-6 rounded-lg text-center shadow-lg`}>
+        <p className="text-4xl font-bold text-white">{value}</p>
+        <h3 className="text-gray-300 text-lg font-medium mt-2 uppercase tracking-wider">{title}</h3>
+    </div>
+);
+
+
+const ContentPerformanceChart: React.FC<{ posts: Post[] }> = ({ posts }) => {
+    const [period, setPeriod] = useState<Period>(Period.Last7Days);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    
+    const dateRange = useMemo(() => {
+        if (period === Period.Custom) {
+            return {
+                start: startDate ? startOfDay(parseISO(startDate)) : null,
+                end: endDate ? endOfDay(parseISO(endDate)) : null
+            };
+        }
+        return getPeriodRange(period);
+    }, [period, startDate, endDate]);
+
+    const chartData = useMemo(() => {
+        if (!dateRange.start || !dateRange.end) return [];
+
+        const postsInDateRange = posts.filter(post => {
+            const postDate = parseISO(post.date);
+            return postDate >= dateRange.start && postDate <= dateRange.end;
+        });
+
+        const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
+        return days.map(day => {
+            const dayStr = format(day, 'yyyy-MM-dd');
+            const postedCount = postsInDateRange.filter(p => p.isPosted && format(parseISO(p.date), 'yyyy-MM-dd') === dayStr).length;
+            return {
+                name: format(day, 'dd/MM'),
+                Postagens: postedCount,
+            };
+        });
+    }, [posts, dateRange]);
+
+    return (
+        <div className="bg-gray-900/50 border border-gray-800 p-4 sm:p-6 rounded-lg mt-6">
+             <div className="flex flex-wrap gap-4 mb-4 items-end">
+                 <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Período do Gráfico</label>
+                    <select value={period} onChange={(e) => setPeriod(e.target.value as Period)} className="bg-dark-bg border border-gray-700 rounded-md px-3 py-2 text-white focus:ring-primary-500 focus:border-primary-500">
+                        {Object.values(Period).map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                </div>
+                {period === Period.Custom && (
+                    <>
+                        <div>
+                            <label htmlFor="chart-start-date" className="block text-sm font-medium text-gray-400 mb-1">Data Início</label>
+                            <input type="date" id="chart-start-date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-dark-bg border border-gray-700 rounded-md px-3 py-2 text-white focus:ring-primary-500 focus:border-primary-500"/>
+                        </div>
+                        <div>
+                            <label htmlFor="chart-end-date" className="block text-sm font-medium text-gray-400 mb-1">Data Fim</label>
+                            <input type="date" id="chart-end-date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-dark-bg border border-gray-700 rounded-md px-3 py-2 text-white focus:ring-primary-500 focus:border-primary-500"/>
+                        </div>
+                    </>
+                )}
+            </div>
+            <div style={{ width: '100%', height: 300 }}>
+                <ResponsiveContainer>
+                    <LineChart data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
+                        <XAxis dataKey="name" stroke="#A0AEC0" />
+                        <YAxis stroke="#A0AEC0" allowDecimals={false} />
+                        <Tooltip
+                            contentStyle={{ backgroundColor: '#1A202C', borderColor: '#4A5568' }}
+                            itemStyle={{ color: '#0ea5e9' }}
+                            labelStyle={{ color: '#E2E8F0' }}
+                        />
+                        <Line type="monotone" dataKey="Postagens" stroke="#0ea5e9" strokeWidth={2} dot={{ r: 4, fill: '#0ea5e9' }} activeDot={{ r: 8 }}>
+                            <LabelList dataKey="Postagens" position="top" style={{ fill: '#e2e8f0', fontSize: '12px' }} formatter={(value: number) => value > 0 ? value : ''} />
+                        </Line>
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
+        </div>
     );
 };
 
@@ -274,10 +383,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     const [postToEdit, setPostToEdit] = useState<Post | null>(null);
     const [metricToEdit, setMetricToEdit] = useState<DailyMetric | null>(null);
     const [currentPage, setCurrentPage] = useState('metrics');
-    const [viewMode, setViewMode] = useState<'table' | 'board'>('table');
 
     // Filters for Posts
-    const [period, setPeriod] = useState<Period>(Period.Last7Days);
+    const [period, setPeriod] = useState<Period>(Period.All);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [accountFilter, setAccountFilter] = useState('');
@@ -285,11 +393,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     const [sortBy, setSortBy] = useState('date');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
     
-    // Filters for Metrics
+    // Filters for Metrics page
     const [metricPeriod, setMetricPeriod] = useState<Period>(Period.Last7Days);
     const [metricStartDate, setMetricStartDate] = useState('');
     const [metricEndDate, setMetricEndDate] = useState('');
     const [metricAccountFilter, setMetricAccountFilter] = useState('');
+
+    // Filters for Analytics Chart
+    const [chartMetric, setChartMetric] = useState<'GMV' | 'Lucro' | 'Views'>('GMV');
+    const [chartPeriod, setChartPeriod] = useState<Period>(Period.Last7Days);
+    const [chartStartDate, setChartStartDate] = useState('');
+    const [chartEndDate, setChartEndDate] = useState('');
+
 
     // --- ERROR HANDLER --- //
     const handleFirestoreError = (error: any, action: string) => {
@@ -327,6 +442,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     }, []);
 
     // --- COMPUTED DATA & MEMOS --- //
+    const totalGmv = useMemo(() => {
+        return allMetrics.reduce((sum, metric) => sum + metric.gmv, 0);
+    }, [allMetrics]);
+
     const uniqueAccounts = useMemo(() => {
         const postAccounts = allPosts.map(p => p.account);
         const metricAccounts = allMetrics.map(m => m.account);
@@ -340,6 +459,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 end: endDate ? endOfDay(parseISO(endDate)) : null
             };
         }
+        if (period === Period.All) {
+            return { start: null, end: null };
+        }
         return getPeriodRange(period);
     }, [period, startDate, endDate]);
 
@@ -350,13 +472,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 derivedStatus: getStatus(post)
             }))
             .filter(post => {
+                const matchesAccount = !accountFilter || post.account === accountFilter;
+                if (period === Period.All) {
+                    return matchesAccount;
+                }
                 const postDate = parseISO(post.date);
                 const isAfterStart = !dateRange.start || postDate >= dateRange.start;
                 const isBeforeEnd = !dateRange.end || postDate <= dateRange.end;
-                const matchesAccount = !accountFilter || post.account === accountFilter;
                 return isAfterStart && isBeforeEnd && matchesAccount;
             });
-    }, [allPosts, dateRange, accountFilter]);
+    }, [allPosts, dateRange, accountFilter, period]);
+
+    const postCounts = useMemo(() => {
+        return filteredPosts.reduce((acc, post) => {
+            if (post.derivedStatus === Status.Posted) acc.posted++;
+            else if (post.derivedStatus === Status.Pending) acc.pending++;
+            else if (post.derivedStatus === Status.Overdue) acc.overdue++;
+            return acc;
+        }, { posted: 0, pending: 0, overdue: 0 });
+    }, [filteredPosts]);
 
     const sortedPosts = useMemo(() => {
         return [...filteredPosts].sort((a, b) => {
@@ -375,10 +509,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 end: metricEndDate ? endOfDay(parseISO(metricEndDate)) : null
             };
         }
+        if (metricPeriod === Period.All) {
+            return { start: null, end: null };
+        }
         return getPeriodRange(metricPeriod);
     }, [metricPeriod, metricStartDate, metricEndDate]);
 
     const filteredMetrics = useMemo(() => {
+        if (!metricDateRange.start || !metricDateRange.end) {
+             return metricPeriod === Period.All ? allMetrics.filter(m => !metricAccountFilter || m.account === metricAccountFilter) : [];
+        }
         return allMetrics.filter(metric => {
             const metricDate = parseISO(metric.date);
             const isAfterStart = !metricDateRange.start || metricDate >= metricDateRange.start;
@@ -386,10 +526,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             const matchesAccount = !metricAccountFilter || metric.account === metricAccountFilter;
             return isAfterStart && isBeforeEnd && matchesAccount;
         });
-    }, [allMetrics, metricDateRange, metricAccountFilter]);
+    }, [allMetrics, metricDateRange, metricAccountFilter, metricPeriod]);
+
+    const postedPostsInPeriod = useMemo(() => {
+        if (!metricDateRange.start || !metricDateRange.end) {
+            return metricPeriod === Period.All ? allPosts.filter(p => p.isPosted) : [];
+        }
+        return allPosts.filter(p => {
+            if (!p.isPosted || !p.postedAt) return false;
+            const postDate = parseISO(p.postedAt);
+            return postDate >= metricDateRange.start! && postDate <= metricDateRange.end!;
+        });
+    }, [allPosts, metricDateRange, metricPeriod]);
     
     const kpiData = useMemo(() => {
-        return filteredMetrics.reduce((acc, metric) => {
+        const baseKpis = filteredMetrics.reduce((acc, metric) => {
             acc.gmv += metric.gmv;
             acc.lucro += metric.lucro;
             acc.sales += metric.sales;
@@ -397,23 +548,55 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             acc.views += metric.views;
             return acc;
         }, { gmv: 0, lucro: 0, sales: 0, clicks: 0, views: 0 });
-    }, [filteredMetrics]);
 
-    const dailyChartData = useMemo(() => {
-        if (!metricDateRange.start || !metricDateRange.end) return [];
+        const videosPostados = postedPostsInPeriod.length;
+        const rpp = videosPostados > 0 ? baseKpis.gmv / videosPostados : 0;
 
-        const days = eachDayOfInterval({ start: metricDateRange.start, end: metricDateRange.end });
+        return { ...baseKpis, videosPostados, rpp };
+    }, [filteredMetrics, postedPostsInPeriod]);
+
+    const chartDateRange = useMemo(() => {
+        if (chartPeriod === Period.Custom) {
+            return {
+                start: chartStartDate ? startOfDay(parseISO(chartStartDate)) : null,
+                end: chartEndDate ? endOfDay(parseISO(chartEndDate)) : null
+            };
+        }
+        return getPeriodRange(chartPeriod);
+    }, [chartPeriod, chartStartDate, chartEndDate]);
+
+
+    const analyticsChartData = useMemo(() => {
+        if (!chartDateRange.start || !chartDateRange.end) return [];
+
+        const metricsForChart = allMetrics.filter(metric => {
+            const matchesAccount = !metricAccountFilter || metric.account === metricAccountFilter;
+            if (!matchesAccount) return false;
+            
+            const metricDate = parseISO(metric.date);
+            return metricDate >= chartDateRange.start! && metricDate <= chartDateRange.end!;
+        });
+        
+        const days = eachDayOfInterval({ start: chartDateRange.start, end: chartDateRange.end });
         
         return days.map(day => {
             const dayStr = format(day, 'yyyy-MM-dd');
-            const metricsForDay = filteredMetrics.filter(m => m.date === dayStr);
+            const metricsForDay = metricsForChart.filter(m => m.date === dayStr);
+            const value = metricsForDay.reduce((sum, m) => {
+                switch (chartMetric) {
+                    case 'GMV': return sum + m.gmv;
+                    case 'Lucro': return sum + m.lucro;
+                    case 'Views': return sum + m.views;
+                    default: return sum;
+                }
+            }, 0);
+
             return {
                 name: format(day, 'dd/MM'),
-                GMV: metricsForDay.reduce((sum, m) => sum + m.gmv, 0),
-                Lucro: metricsForDay.reduce((sum, m) => sum + m.lucro, 0),
+                [chartMetric]: value,
             };
         });
-    }, [filteredMetrics, metricDateRange]);
+    }, [allMetrics, chartDateRange, chartMetric, metricAccountFilter]);
 
 
     // --- EVENT HANDLERS --- //
@@ -504,6 +687,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         if (window.confirm('Tem certeza que deseja excluir este registro diário?')) {
             try {
                 await window.deleteUserSubcollectionDoc('dailyMetrics', id);
+            // Fix: Add curly braces to the catch block to fix the syntax error.
             } catch (error) {
                 handleFirestoreError(error, 'excluir a métrica');
             }
@@ -512,11 +696,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
 
     return (
-        <div className="flex h-screen bg-gray-900 text-gray-200">
+        <div className="flex h-screen bg-black text-gray-200">
             <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
 
             <main className="flex-1 flex flex-col">
-                <Header user={user} logout={logout} onAddPost={handleAddPost} onAddMetric={handleAddMetric} currentPage={currentPage} />
+                <Header 
+                    user={user} 
+                    logout={logout} 
+                    onAddPost={handleAddPost} 
+                    onAddMetric={handleAddMetric} 
+                    currentPage={currentPage}
+                    gmvData={{ current: totalGmv, goal: 250000 }}
+                />
                 
                 <div className="flex-1 p-4 sm:p-6 overflow-auto">
                     {currentPage === 'metrics' && (
@@ -528,7 +719,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400 mb-1">Período</label>
-                                    <select value={metricPeriod} onChange={e => setMetricPeriod(e.target.value as Period)} className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white">
+                                    <select value={metricPeriod} onChange={e => setMetricPeriod(e.target.value as Period)} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
                                         {Object.values(Period).map(p => <option key={p} value={p}>{p}</option>)}
                                     </select>
                                 </div>
@@ -536,17 +727,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                     <>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-400 mb-1">Data Início</label>
-                                            <input type="date" value={metricStartDate} onChange={e => setMetricStartDate(e.target.value)} className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white"/>
+                                            <input type="date" value={metricStartDate} onChange={e => setMetricStartDate(e.target.value)} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white"/>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-400 mb-1">Data Fim</label>
-                                            <input type="date" value={metricEndDate} onChange={e => setMetricEndDate(e.target.value)} className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white"/>
+                                            <input type="date" value={metricEndDate} onChange={e => setMetricEndDate(e.target.value)} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white"/>
                                         </div>
                                     </>
                                 )}
                                  <div>
                                     <label className="block text-sm font-medium text-gray-400 mb-1">Conta</label>
-                                    <select value={metricAccountFilter} onChange={e => setMetricAccountFilter(e.target.value)} className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white">
+                                    <select value={metricAccountFilter} onChange={e => setMetricAccountFilter(e.target.value)} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
                                         <option value="">Todas as Contas</option>
                                         {uniqueAccounts.map(acc => <option key={acc} value={acc}>{acc}</option>)}
                                     </select>
@@ -554,32 +745,46 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                             </div>
 
                             {/* KPIs */}
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                                <KpiCard title="GMV Total" value={`R$ ${kpiData.gmv.toFixed(2)}`} />
-                                <KpiCard title="Lucro Total" value={`R$ ${kpiData.lucro.toFixed(2)}`} />
-                                <KpiCard title="Vendas" value={kpiData.sales.toString()} />
-                                <KpiCard title="Cliques" value={kpiData.clicks.toString()} />
-                                <KpiCard title="Visualizações" value={kpiData.views.toString()} />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                                <KpiCard title="GMV" value={`R$ ${kpiData.gmv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                <KpiCard title="Lucro (Comissão)" value={`R$ ${kpiData.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                <KpiCard title="Itens Vendidos" value={kpiData.sales.toLocaleString('pt-BR')} />
+                                <KpiCard title="Vídeos Postados" value={kpiData.videosPostados.toLocaleString('pt-BR')} />
+                                <KpiCard title="RPP" value={`R$ ${kpiData.rpp.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                <KpiCard title="Views" value={kpiData.views.toLocaleString('pt-BR')} />
+                                <KpiCard title="Cliques" value={kpiData.clicks.toLocaleString('pt-BR')} />
                             </div>
                             
                             {/* Chart */}
-                            <div className="bg-gray-800/50 border border-gray-700 p-4 sm:p-6 rounded-lg">
-                                 <h3 className="text-xl font-bold text-white mb-4">GMV & Lucro por Dia</h3>
+                            <div className="bg-gray-900/50 border border-gray-800 p-4 sm:p-6 rounded-lg">
+                                <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
+                                    <h3 className="text-xl font-bold text-white">Análise Gráfica</h3>
+                                    <div className="flex flex-wrap items-center gap-4">
+                                        <select value={chartMetric} onChange={(e) => setChartMetric(e.target.value as any)} className="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
+                                            <option value="GMV">GMV</option>
+                                            <option value="Lucro">Lucro</option>
+                                            <option value="Views">Views</option>
+                                        </select>
+                                        <select value={chartPeriod} onChange={e => setChartPeriod(e.target.value as Period)} className="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
+                                            {Object.values(Period).filter(p => p !== Period.All).map(p => <option key={p} value={p}>{p}</option>)}
+                                        </select>
+                                        {chartPeriod === Period.Custom && (
+                                            <>
+                                                <input type="date" value={chartStartDate} onChange={e => setChartStartDate(e.target.value)} className="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white"/>
+                                                <input type="date" value={chartEndDate} onChange={e => setChartEndDate(e.target.value)} className="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white"/>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                                  <div style={{ width: '100%', height: 300 }}>
                                       <ResponsiveContainer>
-                                        <BarChart data={dailyChartData} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
+                                        <LineChart data={analyticsChartData} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
                                             <XAxis dataKey="name" stroke="#A0AEC0" />
                                             <YAxis stroke="#A0AEC0" />
                                             <Tooltip contentStyle={{ backgroundColor: '#1A202C', borderColor: '#4A5568' }} />
-                                            <Legend />
-                                            <Bar dataKey="GMV" fill="#818cf8">
-                                                <LabelList dataKey="GMV" position="top" formatter={(value: number) => value > 0 ? `R$${value.toFixed(0)}` : ''} style={{ fill: '#e2e8f0', fontSize: '12px' }} />
-                                            </Bar>
-                                            <Bar dataKey="Lucro" fill="#22c55e">
-                                                <LabelList dataKey="Lucro" position="top" formatter={(value: number) => value > 0 ? `R$${value.toFixed(0)}` : ''} style={{ fill: '#e2e8f0', fontSize: '12px' }} />
-                                            </Bar>
-                                        </BarChart>
+                                            <Line type="monotone" dataKey={chartMetric} name={chartMetric} stroke="#0ea5e9" strokeWidth={2} dot={{ r: 4, fill: '#0ea5e9' }} activeDot={{ r: 8 }} />
+                                        </LineChart>
                                     </ResponsiveContainer>
                                  </div>
                             </div>
@@ -590,68 +795,66 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                     )}
                     {currentPage === 'posts' && (
                         <div className="space-y-6">
-                             <div className="flex justify-between items-center">
-                                <h2 className="text-2xl font-bold text-white">Performance de Conteúdo</h2>
-                                <div className="flex items-center bg-gray-800 rounded-md p-1 border border-gray-700">
-                                    <button onClick={() => setViewMode('table')} className={`px-3 py-1 rounded-md text-sm transition-colors ${viewMode === 'table' ? 'bg-primary-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Tabela</button>
-                                    <button onClick={() => setViewMode('board')} className={`px-3 py-1 rounded-md text-sm transition-colors ${viewMode === 'board' ? 'bg-primary-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Quadro</button>
-                                </div>
-                            </div>
-                            {/* Post Filters */}
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Período</label>
-                                    <select value={period} onChange={e => setPeriod(e.target.value as Period)} className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white">
-                                        {Object.values(Period).map(p => <option key={p} value={p}>{p}</option>)}
-                                    </select>
-                                </div>
-                                {period === Period.Custom && (
-                                    <>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-400 mb-1">Data Início</label>
-                                            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white"/>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-400 mb-1">Data Fim</label>
-                                            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white"/>
-                                        </div>
-                                    </>
-                                )}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Conta</label>
-                                    <select value={accountFilter} onChange={e => setAccountFilter(e.target.value)} className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white">
-                                        <option value="">Todas as Contas</option>
-                                        {uniqueAccounts.map(acc => <option key={acc} value={acc}>{acc}</option>)}
-                                    </select>
-                                </div>
-                                <div className="flex items-end">
-                                    <label className="flex items-center gap-2 text-white cursor-pointer">
-                                        <input type="checkbox" checked={groupByAccount} onChange={e => setGroupByAccount(e.target.checked)} className="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary-600 focus:ring-primary-500" />
-                                        Agrupar por conta
-                                    </label>
-                                </div>
+                            <h2 className="text-2xl font-bold text-white">Performance de Conteúdo</h2>
+
+                            {/* Post KPIs */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <PostStatCard title="Total" value={filteredPosts.length} bgColorClass="bg-blue-900" />
+                                <PostStatCard title="Postados" value={postCounts.posted} bgColorClass="bg-green-900" />
+                                <PostStatCard title="Pendentes" value={postCounts.pending} bgColorClass="bg-orange-900" />
+                                <PostStatCard title="Atrasados" value={postCounts.overdue} bgColorClass="bg-red-900" />
                             </div>
 
+                            {/* Post Filters */}
+                            <div className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-1">Período dos Registros</label>
+                                        <select value={period} onChange={e => setPeriod(e.target.value as Period)} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
+                                            {Object.values(Period).map(p => <option key={p} value={p}>{p}</option>)}
+                                        </select>
+                                    </div>
+                                    {period === Period.Custom && (
+                                        <>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400 mb-1">Data Início</label>
+                                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white"/>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400 mb-1">Data Fim</label>
+                                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white"/>
+                                            </div>
+                                        </>
+                                    )}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-1">Conta</label>
+                                        <select value={accountFilter} onChange={e => setAccountFilter(e.target.value)} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
+                                            <option value="">Todas as Contas</option>
+                                            {uniqueAccounts.map(acc => <option key={acc} value={acc}>{acc}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="flex items-end pb-2">
+                                        <label className="flex items-center gap-2 text-white cursor-pointer">
+                                            <input type="checkbox" checked={groupByAccount} onChange={e => setGroupByAccount(e.target.checked)} className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-primary-600 focus:ring-primary-500" />
+                                            Agrupar por conta
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             {/* Content view */}
-                            {viewMode === 'table' ? (
-                                <PostTable
-                                    posts={sortedPosts}
-                                    groupByAccount={groupByAccount}
-                                    onEdit={handleEditPost}
-                                    onDelete={handleDeletePost}
-                                    onSetPosted={handleSetPosted}
-                                    sortBy={sortBy}
-                                    sortDir={sortDir}
-                                    onSort={handleSort}
-                                />
-                            ) : (
-                                <PostBoard
-                                    posts={sortedPosts}
-                                    onEdit={handleEditPost}
-                                    onDelete={handleDeletePost}
-                                    onSetPosted={handleSetPosted}
-                                />
-                            )}
+                            <PostTable
+                                posts={sortedPosts}
+                                groupByAccount={groupByAccount}
+                                onEdit={handleEditPost}
+                                onDelete={handleDeletePost}
+                                onSetPosted={handleSetPosted}
+                                sortBy={sortBy}
+                                sortDir={sortDir}
+                                onSort={handleSort}
+                            />
+
+                            <ContentPerformanceChart posts={allPosts} />
                         </div>
                     )}
                 </div>

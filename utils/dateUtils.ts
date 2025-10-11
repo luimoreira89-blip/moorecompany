@@ -28,10 +28,13 @@ export const getPeriodRange = (period: Period): { start: Date; end: Date } => {
             return { start: startOfDay(yesterday), end: endOfDay(yesterday) };
         case Period.Last7Days:
             return { start: startOfDay(subDays(now, 6)), end: endOfDay(now) };
+        case Period.Last15Days:
+            return { start: startOfDay(subDays(now, 14)), end: endOfDay(now) };
         case Period.Last30Days:
             return { start: startOfDay(subDays(now, 29)), end: endOfDay(now) };
         default:
-            // Period.Custom is handled outside this function, so this is a fallback.
+            // Period.All and Period.Custom are handled outside this function
+            // This is a fallback.
             return { start: startOfDay(subDays(now, 6)), end: endOfDay(now) };
     }
 };

@@ -23,12 +23,12 @@ const PostCard: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post
             <div className="flex items-center gap-4 pt-2">
                 {post.driveLink && (
                     <a href={post.driveLink} target="_blank" rel="noopener noreferrer" title="Abrir link do criativo">
-                         <img src="https://iili.io/Kwj8bMQ.png" alt="Ícone Google Drive" className="h-6 w-6 hover:opacity-80 transition-opacity" />
+                         <span role="img" aria-label="Claquete" className="text-2xl hover:opacity-80 transition-opacity">🎬</span>
                     </a>
                 )}
                 {post.copyLink && (
                     <a href={post.copyLink} target="_blank" rel="noopener noreferrer" title="Abrir link da copy">
-                         <img src="https://iili.io/KwjBsoI.png" alt="Ícone Google Docs" className="h-6 w-6 hover:opacity-80 transition-opacity" />
+                         <span role="img" aria-label="Mão escrevendo" className="text-2xl hover:opacity-80 transition-opacity">✍️</span>
                     </a>
                 )}
             </div>

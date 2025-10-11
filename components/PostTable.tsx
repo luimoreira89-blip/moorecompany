@@ -27,7 +27,7 @@ const SortableHeader: React.FC<{ title: string; sortKey: string; sortBy: string;
 
 const PostRow: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post: Post) => void; onDelete: (id: string) => void; onSetPosted: (id: string, isPosted: boolean) => void; }> = ({ post, onEdit, onDelete, onSetPosted }) => {
     return (
-        <tr className="bg-gray-800 hover:bg-gray-700/50 transition-colors">
+        <tr className="bg-gray-900 hover:bg-gray-800/50 transition-colors">
             <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">{post.account}</td>
             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{formatPostDate(post.date)}</td>
             <td className="px-4 py-4 text-sm text-gray-300 max-w-xs truncate">{post.info}</td>
@@ -37,7 +37,7 @@ const PostRow: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post:
                  <div className="flex items-center gap-2">
                     <input 
                         type="checkbox"
-                        className="h-5 w-5 rounded border-gray-600 bg-gray-900 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                        className="h-5 w-5 rounded border-gray-700 bg-gray-900 text-primary-600 focus:ring-primary-500 cursor-pointer"
                         checked={post.isPosted}
                         onChange={(e) => onSetPosted(post.id, e.target.checked)}
                     />
@@ -54,14 +54,14 @@ const PostRow: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post:
             <td className="px-4 py-4 whitespace-nowrap text-center">
                  {post.driveLink && (
                     <a href={post.driveLink} target="_blank" rel="noopener noreferrer" title="Abrir link do criativo">
-                         <img src="https://iili.io/Kwj8bMQ.png" alt="Ícone Google Drive" className="h-6 w-6 mx-auto hover:opacity-80 transition-opacity" />
+                         <span role="img" aria-label="Claquete" className="text-2xl hover:opacity-80 transition-opacity">🎬</span>
                     </a>
                 )}
             </td>
             <td className="px-4 py-4 whitespace-nowrap text-center">
                  {post.copyLink && (
                     <a href={post.copyLink} target="_blank" rel="noopener noreferrer" title="Abrir link da copy">
-                         <img src="https://iili.io/KwjBsoI.png" alt="Ícone Google Docs" className="h-6 w-6 mx-auto hover:opacity-80 transition-opacity" />
+                         <span role="img" aria-label="Mão escrevendo" className="text-2xl hover:opacity-80 transition-opacity">✍️</span>
                     </a>
                 )}
             </td>
@@ -101,9 +101,9 @@ const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }
     }, [posts, groupByAccount]);
 
     return (
-        <div className="overflow-x-auto bg-gray-800/50 border border-gray-700 rounded-lg">
-            <table className="min-w-full divide-y divide-gray-700">
-                <thead className="bg-gray-800">
+        <div className="overflow-x-auto bg-gray-900/50 border border-gray-800 rounded-lg">
+            <table className="min-w-full divide-y divide-gray-800">
+                <thead className="bg-gray-900">
                     <tr>
                         <SortableHeader title="Conta" sortKey="account" {...props} />
                         <SortableHeader title="Data" sortKey="date" {...props} />
@@ -116,14 +116,14 @@ const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }
                         <th scope="col" className="relative px-4 py-3"><span className="sr-only">Ações</span></th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-gray-800">
                     {/* FIX: Replace `Object.entries` with `Object.keys` to ensure `data` is correctly typed and prevent "property does not exist on type 'unknown'" errors. */}
                     {groupedPosts ? (
                         Object.keys(groupedPosts).map((account) => {
                             const data = groupedPosts[account];
                             return (
                                 <React.Fragment key={account}>
-                                    <tr className="bg-gray-900">
+                                    <tr className="bg-dark-bg">
                                         <td colSpan={totalColumns} className="px-4 py-3 text-sm font-bold text-primary-300">
                                             <div className="flex justify-between items-center">
                                                 <span>{account}</span>

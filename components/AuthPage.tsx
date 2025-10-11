@@ -61,7 +61,7 @@ const AuthPage: React.FC = () => {
     };
 
     const backgroundStyle: React.CSSProperties = {
-        backgroundColor: '#111827',
+        backgroundColor: '#000000',
         backgroundImage: `
             url('https://iili.io/KwgA0v4.png'),
             url('https://iili.io/KwUbhZX.png')
@@ -74,12 +74,12 @@ const AuthPage: React.FC = () => {
 
     return (
         <div className="flex items-center justify-center min-h-screen w-full" style={backgroundStyle}>
-            <div className="w-full max-w-md p-8 space-y-6 bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-2xl border border-primary-800/60">
+            <div className="w-full max-w-md p-8 space-y-6 bg-dark-bg/70 backdrop-blur-lg rounded-2xl shadow-2xl border border-primary-800/60">
                 <div className="text-center mb-6">
                      <img src="https://iili.io/Kw8h2El.png" alt="Utmify Logo" className="h-28 w-auto mx-auto" />
                     <h2 className="text-2xl text-white mt-4">Análise de Métricas - TikTok Shop</h2>
                 </div>
-                <div className="flex border-b border-gray-700">
+                <div className="flex border-b border-gray-800">
                     <button
                         onClick={() => { setIsLogin(true); setError(''); setSuccess(''); }}
                         className={`w-1/2 py-4 text-center font-medium transition-all duration-300 ${isLogin ? 'text-primary-400 border-b-2 border-primary-400' : 'text-gray-400 hover:text-primary-500'}`}
@@ -109,7 +109,7 @@ const AuthPage: React.FC = () => {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-700 bg-gray-900 placeholder-gray-500 text-white rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-800 bg-gray-900 placeholder-gray-600 text-white rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                                 placeholder="Email"
                             />
                         </div>
@@ -123,7 +123,7 @@ const AuthPage: React.FC = () => {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-700 bg-gray-900 placeholder-gray-500 text-white rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-800 bg-gray-900 placeholder-gray-600 text-white rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                                 placeholder="Senha"
                             />
                         </div>
@@ -131,7 +131,7 @@ const AuthPage: React.FC = () => {
                     <div>
                         <button
                             type="submit"
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-primary-500 transition-colors"
+                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-primary-500 transition-colors"
                         >
                             {isLogin ? 'Entrar' : 'Cadastrar'}
                         </button>
