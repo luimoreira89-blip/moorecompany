@@ -27,22 +27,25 @@ const GmvProgressBar: React.FC<{ current: number; goal: number; }> = ({ current,
     const formattedGoal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal);
 
     return (
-        <div className="w-full">
-            <div className="flex items-center gap-2 mb-1">
-                 <span role="img" aria-label="Medalha">🎖️</span>
-                 <em className="text-white font-semibold italic text-sm">SEJA RARE</em>
+        <div className="w-full max-w-sm">
+            <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-1.5">
+                    <span role="img" aria-label="Medalha">🎖️</span>
+                    <em className="text-white font-semibold italic text-xs">SEJA RARE</em>
+                </div>
+                <div className="text-white font-mono text-xs text-right">{formattedCurrent} / {formattedGoal}</div>
             </div>
-            <div className="w-full h-4 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+            <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
                 <div
                     className="h-full rounded-full progress-bar-neon"
                     style={{ width: `${Math.min(percentage, 100)}%` }}
                     title={`${percentage.toFixed(2)}%`}
                 />
             </div>
-            <div className="text-white font-mono text-xs text-center mt-1">{formattedCurrent} / {formattedGoal}</div>
         </div>
     );
 };
+
 
 const Sidebar: React.FC<{
     currentPage: string;
@@ -51,8 +54,7 @@ const Sidebar: React.FC<{
     setIsSidebarOpen: (isOpen: boolean) => void;
     user: User;
     logout: () => void;
-    gmvData: { current: number; goal: number };
-}> = ({ currentPage, setCurrentPage, isSidebarOpen, setIsSidebarOpen, user, logout, gmvData }) => {
+}> = ({ currentPage, setCurrentPage, isSidebarOpen, setIsSidebarOpen, user, logout }) => {
     const navItems = [
         { id: 'metrics', label: 'Análise de Métricas' },
         { id: 'posts', label: 'Performance de Conteúdo' },
@@ -82,9 +84,8 @@ const Sidebar: React.FC<{
                     </button>
                 ))}
             </nav>
-            {/* GMV and User Profile Section */}
+            {/* User Profile Section */}
             <div className="mt-auto border-t border-gray-800 pt-4 space-y-4">
-                 {gmvData && <GmvProgressBar current={gmvData.current} goal={gmvData.goal} />}
                 <div className="flex items-center gap-3">
                      <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || user.email}&background=0c4a6e&color=fff`} alt="User Avatar" className="h-10 w-10 rounded-full" />
                     <div className="overflow-hidden flex-1">
@@ -313,22 +314,40 @@ const Header: React.FC<{
     onAddMetric: () => void;
     currentPage: string;
     onToggleSidebar: () => void;
-}> = ({ onAddPost, onAddMetric, currentPage, onToggleSidebar }) => {
+    gmvData: { current: number; goal: number };
+}> = ({ onAddPost, onAddMetric, currentPage, onToggleSidebar, gmvData }) => {
     return (
-        <header className="bg-gray-900/50 border-b border-gray-800 p-4 flex justify-between items-center">
-             {/* Hamburger for mobile */}
-            <button onClick={onToggleSidebar} className="sm:hidden text-gray-400 hover:text-white">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
+        <header className="bg-gray-900/50 border-b border-gray-800 p-4 flex items-center justify-between gap-4">
+            {/* Left group */}
+            <div className="flex items-center gap-4">
+                {/* Hamburger for mobile */}
+                <button onClick={onToggleSidebar} className="sm:hidden text-gray-400 hover:text-white">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
 
-            {/* Spacer to push add button to the right on mobile */}
-            <div className="flex-1 sm:hidden" />
+                {/* Progress Bar for mobile */}
+                <div className="sm:hidden">
+                    <div className="w-full max-w-xs">
+                        {gmvData && <GmvProgressBar current={gmvData.current} goal={gmvData.goal} />}
+                    </div>
+                </div>
+            </div>
 
-            <button onClick={currentPage === 'posts' ? onAddPost : onAddMetric} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-md flex items-center gap-2">
-                <PlusIcon className="h-5 w-5" />
-                <span className="hidden sm:inline">{currentPage === 'posts' ? 'Adicionar Post' : 'Adicionar Registro'}</span>
-                <span className="sm:hidden text-sm">Add</span>
-            </button>
+            {/* Right group */}
+            <div className="flex items-center gap-4">
+                {/* Progress Bar for desktop */}
+                <div className="hidden sm:block">
+                    <div className="w-full max-w-sm">
+                        {gmvData && <GmvProgressBar current={gmvData.current} goal={gmvData.goal} />}
+                    </div>
+                </div>
+
+                <button onClick={currentPage === 'posts' ? onAddPost : onAddMetric} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-md flex items-center gap-2 flex-shrink-0">
+                    <PlusIcon className="h-5 w-5" />
+                    <span className="hidden sm:inline">{currentPage === 'posts' ? 'Adicionar Post' : 'Adicionar Registro'}</span>
+                    <span className="sm:hidden text-sm">Add</span>
+                </button>
+            </div>
         </header>
     );
 };
@@ -766,7 +785,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 setIsSidebarOpen={setIsSidebarOpen}
                 user={user}
                 logout={logout}
-                gmvData={{ current: totalGmv, goal: 250000 }}
             />
 
             <main className="flex-1 flex flex-col">
@@ -775,6 +793,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                     onAddMetric={handleAddMetric} 
                     currentPage={currentPage}
                     onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                    gmvData={{ current: totalGmv, goal: 250000 }}
                 />
                 
                 <div className="flex-1 p-4 sm:p-6 overflow-auto">
