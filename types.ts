@@ -45,3 +45,9 @@ export interface User {
     displayName?: string;
     photoURL?: string;
 }
+
+export interface FlowSession {
+    id: string;
+    completedAt: string; // ISO 8601 format string
+    duration: number; // in minutes
+}

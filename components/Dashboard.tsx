@@ -11,6 +11,7 @@ import { parseISO, startOfDay, endOfDay, format, eachDayOfInterval } from 'date-
 // Fix: Add missing imports from recharts for the new line chart.
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
 import PostBoard from './PostBoard';
+import FlowCaverna from './FlowCaverna';
 
 
 // --- SUB-COMPONENTS --- //
@@ -59,6 +60,7 @@ const Sidebar: React.FC<{
     const navItems = [
         { id: 'metrics', label: 'Análise de Métricas' },
         { id: 'posts', label: 'Performance de Conteúdo' },
+        { id: 'flow', label: 'Flow Caverna' },
     ];
 
     const handleNavClick = (page: string) => {
@@ -319,6 +321,10 @@ const Header: React.FC<{
     onToggleSidebar: () => void;
     gmvData: { current: number; goal: number };
 }> = ({ onAddPost, onAddMetric, currentPage, onToggleSidebar, gmvData }) => {
+    const showAddButton = currentPage === 'posts' || currentPage === 'metrics';
+    const buttonAction = currentPage === 'posts' ? onAddPost : onAddMetric;
+    const buttonText = currentPage === 'posts' ? 'Adicionar Post' : 'Adicionar Registro';
+
     return (
         <header className="bg-gray-900/50 border-b border-gray-800 p-4 flex items-center justify-between gap-4">
             {/* Left group */}
@@ -344,12 +350,13 @@ const Header: React.FC<{
                         {gmvData && <GmvProgressBar current={gmvData.current} goal={gmvData.goal} />}
                     </div>
                 </div>
-
-                <button onClick={currentPage === 'posts' ? onAddPost : onAddMetric} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-md flex items-center gap-2 flex-shrink-0">
-                    <PlusIcon className="h-5 w-5" />
-                    <span className="hidden sm:inline">{currentPage === 'posts' ? 'Adicionar Post' : 'Adicionar Registro'}</span>
-                    <span className="sm:hidden text-sm">Add</span>
-                </button>
+                {showAddButton && (
+                    <button onClick={buttonAction} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-md flex items-center gap-2 flex-shrink-0">
+                        <PlusIcon className="h-5 w-5" />
+                        <span className="hidden sm:inline">{buttonText}</span>
+                        <span className="sm:hidden text-sm">Add</span>
+                    </button>
+                )}
             </div>
         </header>
     );
@@ -792,15 +799,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             />
 
             <main className="flex-1 flex flex-col">
-                <Header 
+                {currentPage !== 'flow' && <Header 
                     onAddPost={handleAddPost} 
                     onAddMetric={handleAddMetric} 
                     currentPage={currentPage}
                     onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                     gmvData={{ current: totalGmv, goal: 250000 }}
-                />
+                />}
                 
-                <div className="flex-1 p-4 sm:p-6 overflow-auto">
+                <div className={`flex-1 overflow-auto ${currentPage !== 'flow' ? 'p-4 sm:p-6' : ''}`}>
                     {currentPage === 'metrics' && (
                         <div className="space-y-6">
                              <div className="flex justify-between items-center">
@@ -965,6 +972,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
                             <ContentPerformanceChart posts={allPosts} />
                         </div>
+                    )}
+                     {currentPage === 'flow' && (
+                        <FlowCaverna onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
                     )}
                 </div>
             </main>
