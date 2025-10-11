@@ -291,6 +291,26 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     const [metricEndDate, setMetricEndDate] = useState('');
     const [metricAccountFilter, setMetricAccountFilter] = useState('');
 
+    // --- ERROR HANDLER --- //
+    const handleFirestoreError = (error: any, action: string) => {
+        console.error(`Erro ao ${action}:`, error);
+        let userMessage = `Falha ao ${action}. Tente novamente.`;
+
+        switch (error.code) {
+            case 'permission-denied':
+                userMessage = `Falha ao ${action}: Permissão negada. Verifique as regras de segurança do Firestore no seu painel Firebase para garantir que o usuário logado (${user.email}) tem permissão para escrever na coleção 'users/${user.uid}/...'.`;
+                break;
+            case 'unauthenticated':
+                userMessage = `Falha ao ${action}: Você não está autenticado. Sua sessão pode ter expirado. Tente fazer o login novamente.`;
+                break;
+            case 'unavailable':
+                userMessage = `Falha ao ${action}: O serviço está temporariamente indisponível. Tente novamente mais tarde.`;
+                break;
+            default:
+                 userMessage = `Ocorreu um erro inesperado ao ${action} (${error.code || 'sem código'}). Verifique o console para mais detalhes.`;
+        }
+        alert(userMessage);
+    };
 
     // --- DATA FETCHING --- //
     useEffect(() => {
@@ -421,8 +441,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             try {
                 await window.deleteUserSubcollectionDoc('posts', id);
             } catch (error) {
-                console.error("Error deleting post:", error);
-                alert("Failed to delete post.");
+                handleFirestoreError(error, 'excluir o post');
             }
         }
     };
@@ -442,8 +461,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             }
             setPostModalOpen(false);
         } catch (error) {
-             console.error("Error saving post:", error);
-             alert("Failed to save post.");
+             handleFirestoreError(error, post.id ? 'atualizar o post' : 'salvar o post');
         }
     };
 
@@ -455,8 +473,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             }
             await window.updateUserSubcollectionDoc('posts', id, data);
         } catch (error) {
-            console.error("Error updating post status:", error);
-            alert("Failed to update post status.");
+            handleFirestoreError(error, 'atualizar o status do post');
         }
     };
     
@@ -479,8 +496,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             }
             setMetricModalOpen(false);
         } catch (error) {
-            console.error("Error saving metric:", error);
-            alert("Failed to save metric.");
+            handleFirestoreError(error, metric.id ? 'atualizar a métrica' : 'salvar a métrica');
         }
     };
     
@@ -489,8 +505,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             try {
                 await window.deleteUserSubcollectionDoc('dailyMetrics', id);
             } catch (error) {
-                console.error("Error deleting metric:", error);
-                alert("Failed to delete metric.");
+                handleFirestoreError(error, 'excluir a métrica');
             }
         }
     };
