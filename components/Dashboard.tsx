@@ -10,6 +10,7 @@ import { isValidDriveLink } from '../utils/postUtils';
 import { parseISO, startOfDay, endOfDay, format, eachDayOfInterval } from 'date-fns';
 // Fix: Add missing imports from recharts for the new line chart.
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
+import PostBoard from './PostBoard';
 
 
 // --- SUB-COMPONENTS --- //
@@ -172,11 +173,11 @@ const DailyMetricFormModal: React.FC<{
         const dataToSave = {
             date: formData.date,
             account: formData.account,
-            gmv: Number(formData.gmv) || 0,
+            gmv: Number(String(formData.gmv).replace(',', '.')) || 0,
             sales: Number(formData.sales) || 0,
             views: Number(formData.views) || 0,
             clicks: Number(formData.clicks) || 0,
-            lucro: Number(formData.lucro) || 0,
+            lucro: Number(String(formData.lucro).replace(',', '.')) || 0,
         };
         onSave({ ...dataToSave, id: metricToEdit?.id });
     };
@@ -200,11 +201,13 @@ const DailyMetricFormModal: React.FC<{
                         </div>
                          <div>
                            <label htmlFor="gmv" className="block text-sm font-medium text-gray-300">GMV (R$)</label>
-                           <input type="number" step="0.01" name="gmv" value={formData.gmv} onChange={handleChange} className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
+                           <input type="text" inputMode="decimal" name="gmv" value={formData.gmv} onChange={handleChange} className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
+                           <p className="mt-1 text-xs text-gray-500">Use ponto (.) ou vírgula (,) como separador decimal.</p>
                         </div>
                          <div>
                            <label htmlFor="lucro" className="block text-sm font-medium text-gray-300">Lucro (R$)</label>
-                           <input type="number" step="0.01" name="lucro" value={formData.lucro} onChange={handleChange} className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
+                           <input type="text" inputMode="decimal" name="lucro" value={formData.lucro} onChange={handleChange} className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
+                           <p className="mt-1 text-xs text-gray-500">Use ponto (.) ou vírgula (,) como separador decimal.</p>
                         </div>
                         <div>
                            <label htmlFor="sales" className="block text-sm font-medium text-gray-300">Vendas</label>
@@ -466,6 +469,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     const [groupByAccount, setGroupByAccount] = useState(false);
     const [sortBy, setSortBy] = useState('date');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+    const [postView, setPostView] = useState<'table' | 'board'>('table');
     
     // Filters for Metrics page
     const [metricPeriod, setMetricPeriod] = useState<Period>(Period.Last7Days);
@@ -832,14 +836,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                             </div>
 
                             {/* KPIs */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                                <KpiCard title="GMV" value={`R$ ${kpiData.gmv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                                <KpiCard title="Lucro (Comissão)" value={`R$ ${kpiData.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                                <KpiCard title="Itens Vendidos" value={kpiData.sales.toLocaleString('pt-BR')} />
-                                <KpiCard title="Vídeos Postados" value={kpiData.videosPostados.toLocaleString('pt-BR')} />
-                                <KpiCard title="RPP" value={`R$ ${kpiData.rpp.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                                <KpiCard title="Views" value={kpiData.views.toLocaleString('pt-BR')} />
-                                <KpiCard title="Cliques" value={kpiData.clicks.toLocaleString('pt-BR')} />
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <KpiCard title="GMV" value={`R$ ${kpiData.gmv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                    <KpiCard title="Lucro (Comissão)" value={`R$ ${kpiData.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                    <KpiCard title="Itens Vendidos" value={kpiData.sales.toLocaleString('pt-BR')} />
+                                    <KpiCard title="Vídeos Postados" value={kpiData.videosPostados.toLocaleString('pt-BR')} />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:w-3/4 mx-auto pt-2">
+                                    <KpiCard title="RPP" value={`R$ ${kpiData.rpp.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                    <KpiCard title="Cliques" value={kpiData.clicks.toLocaleString('pt-BR')} />
+                                    <KpiCard title="Views" value={kpiData.views.toLocaleString('pt-BR')} />
+                                </div>
                             </div>
                             
                             {/* Chart */}
@@ -926,20 +934,34 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                         <input type="checkbox" checked={groupByAccount} onChange={e => setGroupByAccount(e.target.checked)} className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-primary-600 focus:ring-primary-500" />
                                         Agrupar por conta (Tabela)
                                     </label>
+                                    <div className="flex items-center bg-gray-800 rounded-md p-1">
+                                        <button onClick={() => setPostView('table')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${postView === 'table' ? 'bg-primary-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Tabela</button>
+                                        <button onClick={() => setPostView('board')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${postView === 'board' ? 'bg-primary-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Quadro</button>
+                                    </div>
                                 </div>
                             </div>
                             
                             {/* Content view */}
-                            <PostTable
-                                posts={sortedPosts}
-                                groupByAccount={groupByAccount}
-                                onEdit={handleEditPost}
-                                onDelete={handleDeletePost}
-                                onSetPosted={handleSetPosted}
-                                sortBy={sortBy}
-                                sortDir={sortDir}
-                                onSort={handleSort}
-                            />
+                            {postView === 'table' ? (
+                                <PostTable
+                                    posts={sortedPosts}
+                                    groupByAccount={groupByAccount}
+                                    onEdit={handleEditPost}
+                                    onDelete={handleDeletePost}
+                                    onSetPosted={handleSetPosted}
+                                    sortBy={sortBy}
+                                    sortDir={sortDir}
+                                    onSort={handleSort}
+                                />
+                            ) : (
+                                <PostBoard
+                                    posts={filteredPosts}
+                                    onEdit={handleEditPost}
+                                    onDelete={handleDeletePost}
+                                    onSetPosted={handleSetPosted}
+                                />
+                            )}
+
 
                             <ContentPerformanceChart posts={allPosts} />
                         </div>
