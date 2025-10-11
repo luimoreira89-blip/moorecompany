@@ -3,15 +3,10 @@ import { Post } from '../types';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList
 } from 'recharts';
-// FIX: Import date-fns functions and locale from their specific paths to resolve module export errors.
-import { default as format } from 'date-fns/format';
-import { default as eachDayOfInterval } from 'date-fns/eachDayOfInterval';
-import { default as startOfMonth } from 'date-fns/startOfMonth';
-import { default as endOfMonth } from 'date-fns/endOfMonth';
-import { default as startOfWeek } from 'date-fns/startOfWeek';
-import { default as endOfWeek } from 'date-fns/endOfWeek';
-import { default as parseISO } from 'date-fns/parseISO';
-import { default as ptBR } from 'date-fns/locale/pt-BR';
+// Fix: Consolidate date-fns imports to resolve module resolution errors.
+import { format, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO } from 'date-fns';
+// Fix: Use named import for date-fns locale to resolve TypeScript type error.
+import { ptBR } from 'date-fns/locale';
 
 interface AnalyticsChartProps {
   allPosts: Post[];

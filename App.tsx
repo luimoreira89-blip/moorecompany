@@ -7,7 +7,8 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 
 declare global {
     interface Window {
-        signInWithGoogle: () => void;
+        signInWithEmailPassword: (email: string, password: string) => Promise<any>;
+        signUpWithEmailPassword: (email: string, password: string) => Promise<any>;
         signOutFirebase: () => void;
         saveUserData: (data: Partial<User>) => Promise<void>;
         watchUserData: (callback: (data: User | {}) => void) => () => void;
@@ -17,9 +18,7 @@ declare global {
 
 export const AuthContext = React.createContext<{
     user: User | null;
-    login: (user: User) => void;
     logout: () => void;
-    register: (user: User) => boolean;
 } | null>(null);
 
 type AuthUser = { uid: string; email?: string; displayName?: string; photoURL?: string } | null;
@@ -31,17 +30,7 @@ interface AppProps {
 
 
 const App: React.FC<AppProps> = ({ authState }) => {
-    const [users, setUsers] = useLocalStorage<User[]>('users', []);
     const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
-
-    const login = useCallback((user: User) => {
-        const foundUser = users.find(u => u.username === user.username && u.password === user.password);
-        if (foundUser) {
-            setCurrentUser(foundUser);
-            return true;
-        }
-        return false;
-    }, [users, setCurrentUser]);
 
     const logout = useCallback(() => {
         // Se for um usuário Firebase (tem uid), desloga do Firebase
@@ -51,16 +40,6 @@ const App: React.FC<AppProps> = ({ authState }) => {
         // Limpa o usuário local para todos os casos
         setCurrentUser(null);
     }, [setCurrentUser, currentUser]);
-
-
-    const register = useCallback((user: User): boolean => {
-        const userExists = users.some(u => u.username === user.username);
-        if (userExists) {
-            return false;
-        }
-        setUsers(prevUsers => [...prevUsers, user]);
-        return true;
-    }, [users, setUsers]);
 
      useEffect(() => {
         const handleAuthStateChange = (event: Event) => {
@@ -74,10 +53,8 @@ const App: React.FC<AppProps> = ({ authState }) => {
                     ...firebaseUser
                 });
             } else {
-                // Se o usuário atual for do Firebase (tem uid), limpa ele
-                if (currentUser?.uid) {
-                    setCurrentUser(null);
-                }
+                // Limpa o usuário ao deslogar
+                setCurrentUser(null);
             }
         };
 
@@ -85,25 +62,18 @@ const App: React.FC<AppProps> = ({ authState }) => {
         return () => {
             window.removeEventListener('firebase-auth-state-changed', handleAuthStateChange);
         };
-    }, [setCurrentUser, currentUser]);
+    }, [setCurrentUser]);
 
 
     const authContextValue = useMemo(() => ({
         user: currentUser,
-        login: (user: User) => {
-            if (login(user)) {
-                return true;
-            }
-            return false;
-        },
         logout,
-        register,
-    }), [currentUser, login, logout, register]);
+    }), [currentUser, logout]);
 
     return (
         <AuthContext.Provider value={authContextValue}>
             <div className="min-h-screen bg-gray-900 text-gray-200">
-                {currentUser ? <Dashboard user={currentUser} logout={logout} /> : <AuthPage login={login} register={register} />}
+                {currentUser ? <Dashboard user={currentUser} logout={logout} /> : <AuthPage />}
             </div>
         </AuthContext.Provider>
     );

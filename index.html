@@ -53,8 +53,8 @@
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "recharts": "https://aistudiocdn.com/recharts@^3.2.1",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "date-fns/": "https://aistudiocdn.com/date-fns@^4.1.0/",
-    "date-fns": "https://aistudiocdn.com/date-fns@^4.1.0"
+    "date-fns/": "https://aistudiocdn.com/date-fns@^3.6.0/",
+    "date-fns": "https://aistudiocdn.com/date-fns@^3.6.0"
   }
 }
 </script>
@@ -62,21 +62,17 @@
 <body class="bg-gray-900">
   <div id="root"></div>
 
-  <!-- BEGIN ADD: Google Auth buttons -->
-  <button id="btnGoogle">Entrar com Google</button>
+  <!-- Botão de Logout permanece -->
   <button id="btnLogout" style="display:none">Sair</button>
-  <!-- END ADD -->
   
   <script type="module" src="/index.tsx"></script>
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { 
       getAuth, 
-      onAuthStateChanged, 
-      GoogleAuthProvider, 
-      signInWithPopup, 
-      signInWithRedirect, 
-      getRedirectResult,
+      onAuthStateChanged,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
       signOut
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { 
@@ -92,92 +88,69 @@
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyDh_EX_TIAuYhLz0o6HjyNclsRPPLXkjyg",
-  authDomain: "dashrare-e93be.firebaseapp.com",
-  projectId: "dashrare-e93be",
-  storageBucket: "dashrare-e93be.appspot.com",
-  messagingSenderId: "248787584417",
-  appId: "1:248787584417:web:341cb53f61f1c18199b7e0"
-};
+      apiKey: "AIzaSyDh_EX_TIAuYhLz0o6HjyNclsRPPLXkjyg",
+      authDomain: "dashrare-e93be.firebaseapp.com",
+      projectId: "dashrare-e93be",
+      storageBucket: "dashrare-e93be.appspot.com",
+      messagingSenderId: "248787584417",
+      appId: "1:248787584417:web:341cb53f61f1c18199b7e0"
+    };
 
-console.log("API KEY ATIVA:", firebaseConfig.apiKey);
-
-
+    console.log("API KEY ATIVA:", firebaseConfig.apiKey);
 
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     let unsubscribeUserWatcher = null;
 
-    // --- Authentication ---
-    const provider = new GoogleAuthProvider();
+    // --- Authentication com Email e Senha ---
+    window.signUpWithEmailPassword = (email, password) => {
+      return createUserWithEmailAndPassword(auth, email, password);
+    };
 
-    window.signInWithGoogle = async () => {
-      try {
-        await signInWithPopup(auth, provider);
-        alert("✅ Login realizado com sucesso!");
-      } catch (error) {
-        if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request' || error.code === 'auth/operation-not-supported-in-this-environment') {
-          await signInWithRedirect(auth, provider);
-        } else {
-          console.error("Login com popup falhou:", error);
-          alert(`❌ Falha no login: ${error.message}`);
-        }
-      }
+    window.signInWithEmailPassword = (email, password) => {
+      return signInWithEmailAndPassword(auth, email, password);
     };
     
     window.signOutFirebase = async () => {
         try {
             await signOut(auth);
-            alert("Você saiu da conta.");
+            // O evento onAuthStateChanged vai lidar com a atualização da UI
         } catch (error) {
             console.error("Erro ao sair:", error);
             alert(`❌ Falha ao sair: ${error.message}`);
         }
     };
 
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          alert("✅ Login realizado com sucesso!");
-        }
-      })
-      .catch((error) => {
-        console.error("Erro em getRedirectResult:", error);
-        alert(`❌ Falha no login por redirecionamento: ${error.message}`);
-      });
-
     onAuthStateChanged(auth, user => {
-      const btnG = document.getElementById('btnGoogle');
       const btnL = document.getElementById('btnLogout');
 
       if (user) {
-        btnG && (btnG.style.display = 'none');
         btnL && (btnL.style.display = 'inline-block');
 
         console.log("Usuário logado (Firebase):", user.uid);
         const userRef = doc(db, "users", user.uid);
         const userData = {
             email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
+            displayName: user.displayName || user.email.split('@')[0], // Fallback para displayName
+            photoURL: user.photoURL, // Pode ser nulo
             lastLoginAt: serverTimestamp()
         };
+        // Cria ou atualiza o perfil do usuário no Firestore
         setDoc(userRef, userData, { merge: true });
 
         window.dispatchEvent(new CustomEvent('firebase-auth-state-changed', {
-          detail: { loggedIn: true, user: { uid: user.uid, email: user.email, displayName: user.displayName, photoURL: user.photoURL } }
+          detail: { loggedIn: true, user: { uid: user.uid, email: user.email, displayName: userData.displayName, photoURL: user.photoURL } }
         }));
 
-        // Inicia o listener de dados do usuário e loga as mudanças
-        unsubscribeUserWatcher = window.watchUserData(data => {
-            console.log("Dados do usuário (Firestore):", data);
-        });
+        // Inicia o listener de dados do usuário
+        if (!unsubscribeUserWatcher) {
+            unsubscribeUserWatcher = window.watchUserData(data => {
+                console.log("Dados do usuário (Firestore):", data);
+            });
+        }
         
-        console.log("Indicando onde carregar dados do usuário no dashboard...");
-
       } else {
-        btnG && (btnG.style.display = 'inline-block');
         btnL && (btnL.style.display = 'none');
         
         console.log("Usuário deslogado (Firebase).");
@@ -271,8 +244,7 @@ console.log("API KEY ATIVA:", firebaseConfig.apiKey);
     };
 
     // Liga os botões globais
-    document.getElementById('btnGoogle')?.addEventListener('click', window.signInWithGoogle);
-    document.getElementById('btnLogout')?.addEventListener('click', () => signOut(auth));
+    document.getElementById('btnLogout')?.addEventListener('click', window.signOutFirebase);
   </script>
 </body>
 </html>

@@ -1,43 +1,62 @@
 import React, { useState } from 'react';
-import { User } from '../types';
 
-interface AuthPageProps {
-    login: (user: User) => boolean;
-    register: (user: User) => boolean;
-}
-
-const AuthPage: React.FC<AuthPageProps> = ({ login, register }) => {
+const AuthPage: React.FC = () => {
     const [isLogin, setIsLogin] = useState(true);
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleFirebaseError = (err: any) => {
+        // Log the full error to the console for debugging purposes.
+        console.error("Firebase Auth Error:", err);
+
+        switch (err.code) {
+            case 'auth/invalid-email':
+                return 'O formato do email é inválido. Por favor, verifique e tente novamente.';
+            case 'auth/weak-password':
+                return 'A senha é muito fraca. Deve ter pelo menos 6 caracteres.';
+            case 'auth/email-already-in-use':
+                return 'Este email já está cadastrado. Tente fazer login ou use um email diferente.';
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+            case 'auth/invalid-credential':
+                 return 'Email ou senha inválidos. Verifique suas credenciais.';
+            case 'auth/operation-not-allowed':
+                 return 'O cadastro por email e senha não está ativado para este aplicativo. Contate o suporte.';
+            case 'auth/too-many-requests':
+                 return 'Acesso temporariamente bloqueado devido a muitas tentativas. Tente novamente mais tarde.';
+            case 'auth/network-request-failed':
+                return 'Erro de rede. Verifique sua conexão com a internet e tente novamente.';
+            default:
+                // For any other error, show a generic message but include the code for reference.
+                return `Ocorreu um erro inesperado (${err.code}). Tente novamente.`;
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setSuccess('');
 
-        if (!username || !password) {
-            setError('Usuário e senha são obrigatórios.');
+        if (!email || !password) {
+            setError('Email e senha são obrigatórios.');
             return;
         }
 
-        if (isLogin) {
-            const loggedIn = login({ username, password });
-            if (!loggedIn) {
-                setError('Usuário ou senha inválidos.');
-            }
-        } else {
-            const registered = register({ username, password });
-            if (registered) {
+        try {
+            if (isLogin) {
+                await window.signInWithEmailPassword(email, password);
+                // onAuthStateChanged irá lidar com o redirecionamento
+            } else {
+                await window.signUpWithEmailPassword(email, password);
                 setSuccess('Cadastro realizado com sucesso! Faça o login.');
                 setIsLogin(true);
-                setUsername('');
+                setEmail('');
                 setPassword('');
-            } else {
-                setError('Este nome de usuário já existe.');
             }
+        } catch (err) {
+            setError(handleFirebaseError(err));
         }
     };
 
@@ -81,16 +100,17 @@ const AuthPage: React.FC<AuthPageProps> = ({ login, register }) => {
                     
                     <div className="rounded-md shadow-sm -space-y-px">
                         <div>
-                            <label htmlFor="username" className="sr-only">Usuário</label>
+                            <label htmlFor="email-address" className="sr-only">Email</label>
                             <input
-                                id="username"
-                                name="username"
-                                type="text"
+                                id="email-address"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
                                 required
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-700 bg-gray-900 placeholder-gray-500 text-white rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                                placeholder="Nome de usuário"
+                                placeholder="Email"
                             />
                         </div>
                         <div>
@@ -99,6 +119,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ login, register }) => {
                                 id="password-input"
                                 name="password"
                                 type="password"
+                                autoComplete={isLogin ? "current-password" : "new-password"}
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -116,25 +137,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ login, register }) => {
                         </button>
                     </div>
                 </form>
-
-                <div className="relative flex items-center justify-center my-4">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-700"></div>
-                    </div>
-                    <div className="relative px-2 bg-gray-900/70 text-sm text-gray-400">OU</div>
-                </div>
-
-                <div>
-                    <button
-                        id="btnGoogle"
-                        type="button"
-                        onClick={() => window.signInWithGoogle()}
-                        className="group relative w-full flex justify-center items-center py-3 px-4 border border-gray-600 text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-primary-500 transition-colors"
-                    >
-                         <svg className="w-5 h-5 mr-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 74.8C307.7 99.8 280.7 86 248 86c-84.3 0-152.3 68.2-152.3 152S163.7 390 248 390c47.1 0 89.6-22.3 117.2-57.2H248v-87.7h239.8c4.3 23.6 6.2 47.8 6.2 73.5z"></path></svg>
-                        Entrar com Google
-                    </button>
-                </div>
             </div>
         </div>
     );

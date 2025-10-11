@@ -1,12 +1,8 @@
 import { Post, Status, Period } from '../types';
-// FIX: Import date-fns functions and locale from their specific paths to resolve module export errors.
-import { default as startOfDay } from 'date-fns/startOfDay';
-import { default as endOfDay } from 'date-fns/endOfDay';
-import { default as isBefore } from 'date-fns/isBefore';
-import { default as format } from 'date-fns/format';
-import { default as parseISO } from 'date-fns/parseISO';
-import { default as subDays } from 'date-fns/subDays';
-import { default as ptBR } from 'date-fns/locale/pt-BR';
+// Fix: Consolidate date-fns imports to resolve module resolution errors.
+import { startOfDay, endOfDay, isBefore, format, parseISO, subDays } from 'date-fns';
+// Fix: Use named import for date-fns locale to resolve TypeScript type error.
+import { ptBR } from 'date-fns/locale';
 
 export const getStatus = (post: Post): Status => {
     if (post.isPosted) {
