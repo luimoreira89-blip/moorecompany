@@ -55,9 +55,9 @@ const PostCard: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post
 
 const BoardColumn: React.FC<{ title: string; posts: (Post & { derivedStatus: Status })[]; status: Status } & Omit<PostBoardProps, 'posts'>> = ({ title, posts, status, ...props }) => {
     return (
-        <div className="flex-shrink-0 w-80 bg-gray-900/50 rounded-lg p-3">
+        <div className="flex-shrink-0 w-full sm:w-80 bg-gray-900/50 rounded-lg p-3">
             <h3 className={`font-bold text-lg mb-4 p-2 rounded-md text-center ${STATUS_COLORS[status]}`}>{title} ({posts.length})</h3>
-            <div className="space-y-4 h-[calc(100vh-350px)] overflow-y-auto pr-2">
+            <div className="space-y-4 max-h-[60vh] sm:h-[calc(100vh-350px)] overflow-y-auto pr-2">
                 {posts.map(post => <PostCard key={post.id} post={post} {...props} />)}
                 {posts.length === 0 && <p className="text-center text-gray-500 mt-8">Nenhum post aqui.</p>}
             </div>
@@ -73,7 +73,7 @@ const PostBoard: React.FC<PostBoardProps> = (props) => {
     const postedPosts = posts.filter(p => p.derivedStatus === Status.Posted);
 
     return (
-        <div className="flex gap-6 overflow-x-auto pb-4">
+        <div className="flex flex-col sm:flex-row gap-6 sm:overflow-x-auto sm:pb-4">
             <BoardColumn title="Atrasado" posts={overduePosts} status={Status.Overdue} {...props} />
             <BoardColumn title="Pendente" posts={pendingPosts} status={Status.Pending} {...props} />
             <BoardColumn title="Postado" posts={postedPosts} status={Status.Posted} {...props} />

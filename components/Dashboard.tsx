@@ -10,7 +10,6 @@ import { isValidDriveLink } from '../utils/postUtils';
 import { parseISO, startOfDay, endOfDay, format, eachDayOfInterval } from 'date-fns';
 // Fix: Add missing imports from recharts for the new line chart.
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
-import PostBoard from './PostBoard';
 
 
 // --- SUB-COMPONENTS --- //
@@ -22,36 +21,85 @@ declare global {
         deleteUserSubcollectionDoc: (collectionName: string, docId: string) => Promise<void>;
     }
 }
+const GmvProgressBar: React.FC<{ current: number; goal: number; }> = ({ current, goal }) => {
+    const percentage = goal > 0 ? (current / goal) * 100 : 0;
+    const formattedCurrent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(current);
+    const formattedGoal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal);
 
-const Sidebar: React.FC<{ currentPage: string; setCurrentPage: (page: string) => void; }> = ({ currentPage, setCurrentPage }) => {
-  const navItems = [
-    { id: 'metrics', label: 'Análise de Métricas' },
-    { id: 'posts', label: 'Performance de Conteúdo' },
-  ];
-
-  return (
-    <div className="w-60 bg-gray-900 p-4 flex-col hidden sm:flex border-r border-gray-800">
-      <div className="mb-10 text-center h-24 flex items-center justify-center">
-         <img src="https://iili.io/Kw8h2El.png" alt="Utmify Logo" className="h-20 w-auto" />
-      </div>
-      <nav className="flex flex-col space-y-2">
-        {navItems.map(item => (
-          <button
-            key={item.id}
-            onClick={() => setCurrentPage(item.id)}
-            className={`px-4 py-2.5 text-left rounded-md text-sm font-medium transition-colors ${
-              currentPage === item.id
-                ? 'bg-primary-600 text-white'
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
-    </div>
-  );
+    return (
+        <div className="w-full">
+            <div className="flex items-center gap-2 mb-1">
+                 <span role="img" aria-label="Medalha">🎖️</span>
+                 <em className="text-white font-semibold italic text-sm">SEJA RARE</em>
+            </div>
+            <div className="w-full h-4 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+                <div
+                    className="h-full rounded-full progress-bar-neon"
+                    style={{ width: `${Math.min(percentage, 100)}%` }}
+                    title={`${percentage.toFixed(2)}%`}
+                />
+            </div>
+            <div className="text-white font-mono text-xs text-center mt-1">{formattedCurrent} / {formattedGoal}</div>
+        </div>
+    );
 };
+
+const Sidebar: React.FC<{
+    currentPage: string;
+    setCurrentPage: (page: string) => void;
+    isSidebarOpen: boolean;
+    setIsSidebarOpen: (isOpen: boolean) => void;
+    user: User;
+    logout: () => void;
+    gmvData: { current: number; goal: number };
+}> = ({ currentPage, setCurrentPage, isSidebarOpen, setIsSidebarOpen, user, logout, gmvData }) => {
+    const navItems = [
+        { id: 'metrics', label: 'Análise de Métricas' },
+        { id: 'posts', label: 'Performance de Conteúdo' },
+    ];
+
+    const handleNavClick = (page: string) => {
+        setCurrentPage(page);
+        setIsSidebarOpen(false); // Fecha a sidebar ao navegar
+    };
+
+    return (
+        <div className={`fixed inset-y-0 left-0 z-30 w-60 bg-gray-900 p-4 flex flex-col border-r border-gray-800 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} sm:relative sm:translate-x-0`}>
+            <div className="mb-10 text-center h-24 flex items-center justify-center">
+                <img src="https://iili.io/Kw8h2El.png" alt="Utmify Logo" className="h-20 w-auto" />
+            </div>
+            <nav className="flex flex-col space-y-2 flex-grow">
+                {navItems.map(item => (
+                    <button
+                        key={item.id}
+                        onClick={() => handleNavClick(item.id)}
+                        className={`px-4 py-2.5 text-left rounded-md text-sm font-medium transition-colors ${currentPage === item.id
+                                ? 'bg-primary-600 text-white'
+                                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                            }`}
+                    >
+                        {item.label}
+                    </button>
+                ))}
+            </nav>
+            {/* GMV and User Profile Section */}
+            <div className="mt-auto border-t border-gray-800 pt-4 space-y-4">
+                 {gmvData && <GmvProgressBar current={gmvData.current} goal={gmvData.goal} />}
+                <div className="flex items-center gap-3">
+                     <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || user.email}&background=0c4a6e&color=fff`} alt="User Avatar" className="h-10 w-10 rounded-full" />
+                    <div className="overflow-hidden flex-1">
+                        <p className="font-semibold text-white text-sm truncate">{user.displayName || user.username}</p>
+                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                    </div>
+                     <button onClick={logout} className="text-gray-400 hover:text-white ml-auto flex-shrink-0" title="Sair">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const KpiCard: React.FC<{ title: string; value: string; }> = ({ title, value }) => (
     <div className="bg-gray-900/50 border border-gray-800 p-5 rounded-lg">
@@ -81,11 +129,11 @@ const DailyMetricFormModal: React.FC<{
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
         account: '',
-        gmv: 0,
-        sales: 0,
-        views: 0,
-        clicks: 0,
-        lucro: 0,
+        gmv: '' as string | number,
+        sales: '' as string | number,
+        views: '' as string | number,
+        clicks: '' as string | number,
+        lucro: '' as string | number,
     });
 
     useEffect(() => {
@@ -103,11 +151,11 @@ const DailyMetricFormModal: React.FC<{
             setFormData({
                 date: new Date().toISOString().split('T')[0],
                 account: '',
-                gmv: 0,
-                sales: 0,
-                views: 0,
-                clicks: 0,
-                lucro: 0,
+                gmv: '',
+                sales: '',
+                views: '',
+                clicks: '',
+                lucro: '',
             });
         }
     }, [metricToEdit]);
@@ -115,16 +163,21 @@ const DailyMetricFormModal: React.FC<{
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        if (name === 'date' || name === 'account') {
-            setFormData(prev => ({ ...prev, [name]: value }));
-        } else {
-            setFormData(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
-        }
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({ ...formData, id: metricToEdit?.id });
+        const dataToSave = {
+            date: formData.date,
+            account: formData.account,
+            gmv: Number(formData.gmv) || 0,
+            sales: Number(formData.sales) || 0,
+            views: Number(formData.views) || 0,
+            clicks: Number(formData.clicks) || 0,
+            lucro: Number(formData.lucro) || 0,
+        };
+        onSave({ ...dataToSave, id: metricToEdit?.id });
     };
 
     return (
@@ -146,23 +199,23 @@ const DailyMetricFormModal: React.FC<{
                         </div>
                          <div>
                            <label htmlFor="gmv" className="block text-sm font-medium text-gray-300">GMV (R$)</label>
-                           <input type="number" step="0.01" name="gmv" value={formData.gmv} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
+                           <input type="number" step="0.01" name="gmv" value={formData.gmv} onChange={handleChange} className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                          <div>
                            <label htmlFor="lucro" className="block text-sm font-medium text-gray-300">Lucro (R$)</label>
-                           <input type="number" step="0.01" name="lucro" value={formData.lucro} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
+                           <input type="number" step="0.01" name="lucro" value={formData.lucro} onChange={handleChange} className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                         <div>
                            <label htmlFor="sales" className="block text-sm font-medium text-gray-300">Vendas</label>
-                           <input type="number" step="1" name="sales" value={formData.sales} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
+                           <input type="number" step="1" name="sales" value={formData.sales} onChange={handleChange} className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                         <div>
                            <label htmlFor="clicks" className="block text-sm font-medium text-gray-300">Cliques</label>
-                           <input type="number" step="1" name="clicks" value={formData.clicks} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
+                           <input type="number" step="1" name="clicks" value={formData.clicks} onChange={handleChange} className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                         <div className="md:col-span-2">
                            <label htmlFor="views" className="block text-sm font-medium text-gray-300">Visualizações</label>
-                           <input type="number" step="1" name="views" value={formData.views} onChange={handleChange} required className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
+                           <input type="number" step="1" name="views" value={formData.views} onChange={handleChange} className="mt-1 block w-full bg-dark-bg border border-gray-700 rounded-md py-2 px-3 text-white" />
                         </div>
                     </div>
                     <div className="flex justify-end gap-4 pt-4">
@@ -178,47 +231,71 @@ const DailyMetricFormModal: React.FC<{
 
 const MetricTable: React.FC<{ metrics: DailyMetric[]; onEdit: (metric: DailyMetric) => void; onDelete: (id: string) => void; }> = ({ metrics, onEdit, onDelete }) => {
     const sortedMetrics = [...metrics].sort((a, b) => b.date.localeCompare(a.date));
+
+    if (sortedMetrics.length === 0) {
+        return <div className="text-center py-10 text-gray-500">Nenhum registro encontrado para o período selecionado.</div>;
+    }
     
     return (
-        <div className="overflow-x-auto bg-gray-900/50 border border-gray-800 rounded-lg">
-            <table className="min-w-full divide-y divide-gray-800">
-                <thead className="bg-gray-900">
-                    <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Data</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Conta</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">GMV</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Lucro</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vendas</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Cliques</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Views</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Ações</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                    {sortedMetrics.map(metric => (
-                        <tr key={metric.id} className="bg-gray-900 hover:bg-gray-800/50 transition-colors">
-                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{format(parseISO(metric.date), 'dd/MM/yyyy')}</td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">{metric.account}</td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">R$ {metric.gmv.toFixed(2)}</td>
-                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">R$ {metric.lucro.toFixed(2)}</td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.sales}</td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.clicks}</td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.views}</td>
-                            <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div className="flex items-center justify-end gap-4">
-                                    <button onClick={() => onEdit(metric)} className="text-primary-400 hover:text-primary-300">Editar</button>
-                                    <button onClick={() => onDelete(metric.id)} className="text-red-400 hover:text-red-300">Excluir</button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
-                     {sortedMetrics.length === 0 && (
+        <div>
+            {/* Mobile Card View */}
+            <div className="space-y-4 sm:hidden"> 
+                {sortedMetrics.map(metric => (
+                    <div key={metric.id} className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 space-y-2">
+                        <div className="flex justify-between items-center">
+                            <span className="font-bold text-white">{metric.account}</span>
+                            <span className="text-sm text-gray-300">{format(parseISO(metric.date), 'dd/MM/yyyy')}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                            <div className="text-gray-400">GMV:</div><div className="text-right text-white">R$ {metric.gmv.toFixed(2)}</div>
+                            <div className="text-gray-400">Lucro:</div><div className="text-right text-white">R$ {metric.lucro.toFixed(2)}</div>
+                            <div className="text-gray-400">Vendas:</div><div className="text-right text-white">{metric.sales}</div>
+                            <div className="text-gray-400">Cliques:</div><div className="text-right text-white">{metric.clicks}</div>
+                            <div className="text-gray-400">Views:</div><div className="text-right text-white">{metric.views}</div>
+                        </div>
+                        <div className="flex justify-end gap-4 border-t border-gray-700 pt-3 mt-2">
+                            <button onClick={() => onEdit(metric)} className="text-primary-400 hover:text-primary-300 font-medium text-sm">Editar</button>
+                            <button onClick={() => onDelete(metric.id)} className="text-red-400 hover:text-red-300 font-medium text-sm">Excluir</button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+             {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto bg-gray-900/50 border border-gray-800 rounded-lg">
+                <table className="min-w-full divide-y divide-gray-800">
+                    <thead className="bg-gray-900">
                         <tr>
-                            <td colSpan={8} className="text-center py-10 text-gray-500">Nenhum registro encontrado para o período selecionado.</td>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Data</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Conta</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">GMV</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Lucro</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vendas</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Cliques</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Views</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Ações</th>
                         </tr>
-                    )}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                        {sortedMetrics.map(metric => (
+                            <tr key={metric.id} className="bg-gray-900 hover:bg-gray-800/50 transition-colors">
+                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{format(parseISO(metric.date), 'dd/MM/yyyy')}</td>
+                                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">{metric.account}</td>
+                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">R$ {metric.gmv.toFixed(2)}</td>
+                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">R$ {metric.lucro.toFixed(2)}</td>
+                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.sales}</td>
+                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.clicks}</td>
+                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.views}</td>
+                                <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div className="flex items-center justify-end gap-4">
+                                        <button onClick={() => onEdit(metric)} className="text-primary-400 hover:text-primary-300">Editar</button>
+                                        <button onClick={() => onDelete(metric.id)} className="text-red-400 hover:text-red-300">Excluir</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };
@@ -230,56 +307,32 @@ const PlusIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const GmvProgressBar: React.FC<{ current: number; goal: number; }> = ({ current, goal }) => {
-    const percentage = goal > 0 ? (current / goal) * 100 : 0;
-    const formattedCurrent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(current);
-    const formattedGoal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal);
 
-    return (
-        <div className="flex items-center gap-3 bg-dark-bg/50 px-3 py-1 rounded-lg">
-            <span role="img" aria-label="Medalha">🎖️</span>
-            <em className="text-white font-semibold italic">SEJA RARE</em>
-            <div className="w-48 h-4 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
-                <div
-                    className="h-full rounded-full progress-bar-neon"
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                    title={`${percentage.toFixed(2)}%`}
-                />
-            </div>
-            <span className="text-white font-mono text-sm">{formattedCurrent} / {formattedGoal}</span>
-        </div>
-    );
-};
-
-
-const Header: React.FC<{ user: User; logout: () => void; onAddPost: () => void; onAddMetric: () => void; currentPage: string; gmvData?: { current: number; goal: number }; }> = ({ user, logout, onAddPost, onAddMetric, currentPage, gmvData }) => {
+const Header: React.FC<{
+    onAddPost: () => void;
+    onAddMetric: () => void;
+    currentPage: string;
+    onToggleSidebar: () => void;
+}> = ({ onAddPost, onAddMetric, currentPage, onToggleSidebar }) => {
     return (
         <header className="bg-gray-900/50 border-b border-gray-800 p-4 flex justify-between items-center">
-            <div>
-                {/* O título da página será renderizado no conteúdo principal agora */}
-            </div>
-            <div className="flex items-center gap-4">
-                 <button onClick={currentPage === 'posts' ? onAddPost : onAddMetric} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-md flex items-center gap-2">
-                    <PlusIcon className="h-5 w-5" />
-                    <span>{currentPage === 'posts' ? 'Adicionar Post' : 'Adicionar Registro'}</span>
-                </button>
-                 {gmvData && (
-                     <GmvProgressBar current={gmvData.current} goal={gmvData.goal} />
-                 )}
-                <div className="flex items-center gap-3">
-                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || user.email}&background=0c4a6e&color=fff`} alt="User Avatar" className="h-10 w-10 rounded-full" />
-                    <div>
-                         <p className="font-semibold text-white">{user.displayName || user.username}</p>
-                         <p className="text-xs text-gray-400">{user.email}</p>
-                    </div>
-                    <button onClick={logout} className="text-gray-400 hover:text-white" title="Sair">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                    </button>
-                </div>
-            </div>
+             {/* Hamburger for mobile */}
+            <button onClick={onToggleSidebar} className="sm:hidden text-gray-400 hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+
+            {/* Spacer to push add button to the right on mobile */}
+            <div className="flex-1 sm:hidden" />
+
+            <button onClick={currentPage === 'posts' ? onAddPost : onAddMetric} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-md flex items-center gap-2">
+                <PlusIcon className="h-5 w-5" />
+                <span className="hidden sm:inline">{currentPage === 'posts' ? 'Adicionar Post' : 'Adicionar Registro'}</span>
+                <span className="sm:hidden text-sm">Add</span>
+            </button>
         </header>
     );
 };
+
 
 const PostStatCard: React.FC<{ title: string; value: number; bgColorClass: string; }> = ({ title, value, bgColorClass }) => (
     <div className={`${bgColorClass} p-6 rounded-lg text-center shadow-lg`}>
@@ -383,6 +436,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     const [postToEdit, setPostToEdit] = useState<Post | null>(null);
     const [metricToEdit, setMetricToEdit] = useState<DailyMetric | null>(null);
     const [currentPage, setCurrentPage] = useState('metrics');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
 
     // Filters for Posts
     const [period, setPeriod] = useState<Period>(Period.All);
@@ -696,17 +751,30 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
 
     return (
-        <div className="flex h-screen bg-black text-gray-200">
-            <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+        <div className="flex h-screen bg-black text-gray-200 overflow-hidden">
+             {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 z-20 sm:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                    aria-hidden="true"
+                ></div>
+            )}
+            <Sidebar
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
+                user={user}
+                logout={logout}
+                gmvData={{ current: totalGmv, goal: 250000 }}
+            />
 
             <main className="flex-1 flex flex-col">
                 <Header 
-                    user={user} 
-                    logout={logout} 
                     onAddPost={handleAddPost} 
                     onAddMetric={handleAddMetric} 
                     currentPage={currentPage}
-                    gmvData={{ current: totalGmv, goal: 250000 }}
+                    onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                 />
                 
                 <div className="flex-1 p-4 sm:p-6 overflow-auto">
@@ -798,7 +866,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                             <h2 className="text-2xl font-bold text-white">Performance de Conteúdo</h2>
 
                             {/* Post KPIs */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <PostStatCard title="Total" value={filteredPosts.length} bgColorClass="bg-blue-900" />
                                 <PostStatCard title="Postados" value={postCounts.posted} bgColorClass="bg-green-900" />
                                 <PostStatCard title="Pendentes" value={postCounts.pending} bgColorClass="bg-orange-900" />
@@ -809,7 +877,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                             <div className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-400 mb-1">Período dos Registros</label>
+                                        <label className="block text-sm font-medium text-gray-400 mb-1">Período</label>
                                         <select value={period} onChange={e => setPeriod(e.target.value as Period)} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
                                             {Object.values(Period).map(p => <option key={p} value={p}>{p}</option>)}
                                         </select>
@@ -833,12 +901,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                             {uniqueAccounts.map(acc => <option key={acc} value={acc}>{acc}</option>)}
                                         </select>
                                     </div>
-                                    <div className="flex items-end pb-2">
-                                        <label className="flex items-center gap-2 text-white cursor-pointer">
-                                            <input type="checkbox" checked={groupByAccount} onChange={e => setGroupByAccount(e.target.checked)} className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-primary-600 focus:ring-primary-500" />
-                                            Agrupar por conta
-                                        </label>
-                                    </div>
+                                </div>
+                                <div className="flex flex-col sm:flex-row justify-between items-center mt-4 border-t border-gray-800 pt-4 gap-4">
+                                     <label className="flex items-center gap-2 text-white cursor-pointer">
+                                        <input type="checkbox" checked={groupByAccount} onChange={e => setGroupByAccount(e.target.checked)} className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-primary-600 focus:ring-primary-500" />
+                                        Agrupar por conta (Tabela)
+                                    </label>
                                 </div>
                             </div>
                             
