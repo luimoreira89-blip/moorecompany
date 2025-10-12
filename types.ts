@@ -46,8 +46,8 @@ export interface User {
     photoURL?: string;
 }
 
+// Fix: Add missing FlowSession interface.
 export interface FlowSession {
-    id: string;
-    completedAt: string; // ISO 8601 format string
     duration: number; // in minutes
+    completedAt: string; // ISO 8601 format string
 }

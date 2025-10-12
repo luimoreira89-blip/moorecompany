@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Post, User, Status, Period, Format } from '../types';
 import { getPeriodRange, getStatus } from '../utils/dateUtils';
@@ -11,7 +10,6 @@ import { parseISO, startOfDay, endOfDay, format, eachDayOfInterval } from 'date-
 // Fix: Add missing imports from recharts for the new line chart.
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
 import PostBoard from './PostBoard';
-import FlowCaverna from './FlowCaverna';
 
 
 // --- SUB-COMPONENTS --- //
@@ -29,20 +27,20 @@ const GmvProgressBar: React.FC<{ current: number; goal: number; }> = ({ current,
     const formattedGoal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal);
 
     return (
-        <div className="w-full max-w-sm">
-            <div className="flex items-center justify-between gap-2 mb-1">
-                <div className="flex items-center gap-1.5">
-                    <span role="img" aria-label="Medalha">🎖️</span>
-                    <em className="text-white font-semibold italic text-xs">SEJA RARE</em>
-                </div>
-                <div className="text-white font-mono text-xs text-right">{formattedCurrent} / {formattedGoal}</div>
+        <div className="w-full max-w-sm flex items-center gap-3">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span role="img" aria-label="Medalha" className="text-lg">🎖️</span>
+                <em className="text-white font-semibold italic text-sm">SEJA RARE</em>
             </div>
-            <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
-                <div
-                    className="h-full rounded-full progress-bar-neon"
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                    title={`${percentage.toFixed(2)}%`}
-                />
+            <div className="w-full flex-grow">
+                 <div className="text-white font-mono text-sm text-right mb-1">{formattedCurrent} / {formattedGoal}</div>
+                 <div className="w-full h-4 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+                    <div
+                        className="h-full rounded-full progress-bar-neon"
+                        style={{ width: `${Math.min(percentage, 100)}%` }}
+                        title={`${percentage.toFixed(2)}%`}
+                    />
+                 </div>
             </div>
         </div>
     );
@@ -60,7 +58,6 @@ const Sidebar: React.FC<{
     const navItems = [
         { id: 'metrics', label: 'Análise de Métricas' },
         { id: 'posts', label: 'Performance de Conteúdo' },
-        { id: 'flow', label: 'Flow Caverna' },
     ];
 
     const handleNavClick = (page: string) => {
@@ -799,15 +796,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             />
 
             <main className="flex-1 flex flex-col">
-                {currentPage !== 'flow' && <Header 
+                <Header 
                     onAddPost={handleAddPost} 
                     onAddMetric={handleAddMetric} 
                     currentPage={currentPage}
                     onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                     gmvData={{ current: totalGmv, goal: 250000 }}
-                />}
+                />
                 
-                <div className={`flex-1 overflow-auto ${currentPage !== 'flow' ? 'p-4 sm:p-6' : ''}`}>
+                <div className="flex-1 overflow-auto p-4 sm:p-6">
                     {currentPage === 'metrics' && (
                         <div className="space-y-6">
                              <div className="flex justify-between items-center">
@@ -891,8 +888,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                  </div>
                             </div>
                              {/* Metric Table */}
-                            <MetricTable metrics={filteredMetrics} onEdit={handleEditMetric} onDelete={handleDeleteMetric} />
-
+                             <div className="max-h-96 overflow-y-auto">
+                                <MetricTable metrics={filteredMetrics} onEdit={handleEditMetric} onDelete={handleDeleteMetric} />
+                             </div>
                         </div>
                     )}
                     {currentPage === 'posts' && (
@@ -972,9 +970,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
                             <ContentPerformanceChart posts={allPosts} />
                         </div>
-                    )}
-                     {currentPage === 'flow' && (
-                        <FlowCaverna onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
                     )}
                 </div>
             </main>
