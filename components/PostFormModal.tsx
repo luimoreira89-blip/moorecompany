@@ -69,7 +69,7 @@ const PostFormModal: React.FC<PostFormModalProps> = ({ post, onSave, onClose, ac
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
             <div className="bg-gray-900 rounded-lg shadow-xl p-6 w-full max-w-lg border border-primary-800 animate-fade-in max-h-full overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-white">{post ? 'Editar Registro' : 'Novo Registro'}</h2>
+                    <h2 className="text-2xl font-bold text-white">{post?.id ? 'Editar Registro' : 'Novo Registro'}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">

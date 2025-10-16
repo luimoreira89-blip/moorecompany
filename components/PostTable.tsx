@@ -9,6 +9,7 @@ interface PostTableProps {
     onEdit: (post: Post) => void;
     onDelete: (id: string) => void;
     onSetPosted: (id: string, isPosted: boolean) => void;
+    onDuplicate: (post: Post) => void;
     sortBy: string;
     sortDir: 'asc' | 'desc';
     onSort: (key: any) => void;
@@ -24,7 +25,7 @@ const SortableHeader: React.FC<{ title: string; sortKey: string; sortBy: string;
     );
 };
 
-const DesktopPostRow: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post: Post) => void; onDelete: (id: string) => void; onSetPosted: (id: string, isPosted: boolean) => void; }> = ({ post, onEdit, onDelete, onSetPosted }) => (
+const DesktopPostRow: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post: Post) => void; onDelete: (id: string) => void; onSetPosted: (id: string, isPosted: boolean) => void; onDuplicate: (post: Post) => void; }> = ({ post, onEdit, onDelete, onSetPosted, onDuplicate }) => (
     <tr className="bg-gray-900 hover:bg-gray-800/50 transition-colors">
         <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">{post.account}</td>
         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{formatPostDate(post.date)}</td>
@@ -66,6 +67,7 @@ const DesktopPostRow: React.FC<{ post: Post & { derivedStatus: Status }; onEdit:
         <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
             <div className="flex items-center justify-end gap-4">
                 <button onClick={() => onEdit(post)} className="text-primary-400 hover:text-primary-300">Editar</button>
+                <button onClick={() => onDuplicate(post)} className="text-yellow-400 hover:text-yellow-300">Duplicar</button>
                 <button onClick={() => onDelete(post.id)} className="text-red-400 hover:text-red-300">Excluir</button>
             </div>
         </td>
@@ -78,7 +80,7 @@ type GroupedData = {
 };
 
 const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }) => {
-    const { onEdit, onDelete, onSetPosted } = props;
+    const { onEdit, onDelete, onSetPosted, onDuplicate } = props;
     const totalColumns = 9;
 
     const groupedPosts = React.useMemo(() => {
@@ -129,6 +131,7 @@ const PostTable: React.FC<PostTableProps> = ({ posts, groupByAccount, ...props }
                         )}
                         <div className="flex justify-end gap-3 pt-2">
                             <button onClick={() => onEdit(post)} className="text-sm text-primary-400 hover:text-primary-300">Editar</button>
+                            <button onClick={() => onDuplicate(post)} className="text-sm text-yellow-400 hover:text-yellow-300">Duplicar</button>
                             <button onClick={() => onDelete(post.id)} className="text-sm text-red-400 hover:text-red-300">Excluir</button>
                         </div>
                     </div>

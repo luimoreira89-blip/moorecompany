@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Post, User, Status, Period, Format } from '../types';
 import { getPeriodRange, getStatus } from '../utils/dateUtils';
@@ -701,6 +702,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         setPostModalOpen(true);
     };
 
+    const handleDuplicatePost = (postToDuplicate: Post) => {
+        // Create a new post object, omitting properties that should not be carried over.
+        const { id, isPosted, postedAt, gmv, sales, clicks, views, ...basePost } = postToDuplicate;
+        const newPost = {
+            ...basePost,
+            date: new Date().toISOString().split('T')[0], // Set date to today
+            isPosted: false, // Default to not posted
+        };
+        setPostToEdit(newPost as Post); // This object has no 'id'
+        setPostModalOpen(true);
+    };
+
     const handleDeletePost = async (id: string) => {
         if (window.confirm('Tem certeza que deseja excluir este registro?')) {
             try {
@@ -954,6 +967,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                     onEdit={handleEditPost}
                                     onDelete={handleDeletePost}
                                     onSetPosted={handleSetPosted}
+                                    onDuplicate={handleDuplicatePost}
                                     sortBy={sortBy}
                                     sortDir={sortDir}
                                     onSort={handleSort}
@@ -964,6 +978,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                     onEdit={handleEditPost}
                                     onDelete={handleDeletePost}
                                     onSetPosted={handleSetPosted}
+                                    onDuplicate={handleDuplicatePost}
                                 />
                             )}
 

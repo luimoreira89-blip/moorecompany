@@ -8,9 +8,10 @@ interface PostBoardProps {
     onEdit: (post: Post) => void;
     onDelete: (id: string) => void;
     onSetPosted: (id: string, isPosted: boolean) => void;
+    onDuplicate: (post: Post) => void;
 }
 
-const PostCard: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post: Post) => void; onDelete: (id: string) => void; onSetPosted: (id: string, isPosted: boolean) => void; }> = ({ post, onEdit, onDelete, onSetPosted }) => {
+const PostCard: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post: Post) => void; onDelete: (id: string) => void; onSetPosted: (id: string, isPosted: boolean) => void; onDuplicate: (post: Post) => void; }> = ({ post, onEdit, onDelete, onSetPosted, onDuplicate }) => {
     return (
         <div className="bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700 space-y-3">
             <div className="flex justify-between items-start">
@@ -45,6 +46,7 @@ const PostCard: React.FC<{ post: Post & { derivedStatus: Status }; onEdit: (post
                 </div>
                 <div className="flex items-center gap-3">
                     <button onClick={() => onEdit(post)} className="text-xs text-primary-400 hover:text-primary-300">Editar</button>
+                    <button onClick={() => onDuplicate(post)} className="text-xs text-yellow-400 hover:text-yellow-300">Duplicar</button>
                     <button onClick={() => onDelete(post.id)} className="text-xs text-red-400 hover:text-red-300">Excluir</button>
                 </div>
             </div>
