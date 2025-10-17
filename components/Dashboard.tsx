@@ -612,15 +612,33 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     }, [allMetrics, metricDateRange, metricAccountFilter, metricPeriod]);
 
     const postedPostsInPeriod = useMemo(() => {
-        if (!metricDateRange.start || !metricDateRange.end) {
-            return metricPeriod === Period.All ? allPosts.filter(p => p.isPosted) : [];
-        }
         return allPosts.filter(p => {
-            if (!p.isPosted || !p.postedAt) return false;
+            // Must be a posted post with a date
+            if (!p.isPosted || !p.postedAt) {
+                return false;
+            }
+
+            // Must match account filter if one is selected
+            const matchesAccount = !metricAccountFilter || p.account === metricAccountFilter;
+            if (!matchesAccount) {
+                return false;
+            }
+
+            // For "All" period, no date filtering is needed
+            if (metricPeriod === Period.All) {
+                return true;
+            }
+
+            // For other periods, ensure we have a valid date range
+            if (!metricDateRange.start || !metricDateRange.end) {
+                return false; // Should not happen for periods other than "All"
+            }
+
+            // Check if the post date is within the range
             const postDate = parseISO(p.postedAt);
-            return postDate >= metricDateRange.start! && postDate <= metricDateRange.end!;
+            return postDate >= metricDateRange.start && postDate <= metricDateRange.end;
         });
-    }, [allPosts, metricDateRange, metricPeriod]);
+    }, [allPosts, metricDateRange, metricPeriod, metricAccountFilter]);
     
     const kpiData = useMemo(() => {
         const baseKpis = filteredMetrics.reduce((acc, metric) => {
