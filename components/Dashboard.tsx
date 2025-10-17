@@ -613,30 +613,30 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
     const postedPostsInPeriod = useMemo(() => {
         return allPosts.filter(p => {
-            // Must be a posted post with a date
-            if (!p.isPosted || !p.postedAt) {
+            // Must be a posted post.
+            if (!p.isPosted) {
                 return false;
             }
 
-            // Must match account filter if one is selected
+            // Must match account filter if one is selected.
             const matchesAccount = !metricAccountFilter || p.account === metricAccountFilter;
             if (!matchesAccount) {
                 return false;
             }
 
-            // For "All" period, no date filtering is needed
+            // For "All" period, no date filtering is needed.
             if (metricPeriod === Period.All) {
                 return true;
             }
 
-            // For other periods, ensure we have a valid date range
+            // For other periods, ensure we have a valid date range.
             if (!metricDateRange.start || !metricDateRange.end) {
-                return false; // Should not happen for periods other than "All"
+                return false;
             }
 
-            // Check if the post date is within the range
-            const postDate = parseISO(p.postedAt);
-            return postDate >= metricDateRange.start && postDate <= metricDateRange.end;
+            // Check if the post's scheduled date is within the range.
+            const scheduledDate = parseISO(p.date);
+            return scheduledDate >= metricDateRange.start && scheduledDate <= metricDateRange.end;
         });
     }, [allPosts, metricDateRange, metricPeriod, metricAccountFilter]);
     
