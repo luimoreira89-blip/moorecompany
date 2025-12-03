@@ -976,6 +976,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                     </ResponsiveContainer>
                                  </div>
                             </div>
+
+                            {/* Historic Table */}
+                            <div className="space-y-4">
+                                <h3 className="text-xl font-bold text-white">Histórico de Registros</h3>
+                                <MetricTable 
+                                    metrics={filteredMetrics} 
+                                    onEdit={handleEditMetric} 
+                                    onDelete={handleDeleteMetric} 
+                                    isMaster={isMaster} 
+                                />
+                            </div>
                         </div>
                     )}
                     {currentPage === 'posts' && (
