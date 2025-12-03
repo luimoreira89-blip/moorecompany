@@ -85,7 +85,9 @@
       collection,
       addDoc,
       updateDoc,
-      deleteDoc
+      deleteDoc,
+      collectionGroup,
+      query
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -212,6 +214,31 @@
       }
       console.warn(`watchUserSubcollection (${collectionName}) called without user.`);
       return () => {};
+    };
+    
+    // --- Nova Função para Conta Mestra: Ler de todos os usuários ---
+    window.watchCollectionGroup = (collectionName, callback) => {
+        console.log(`[MASTER] Iniciando watchCollectionGroup para: ${collectionName}`);
+        const q = query(collectionGroup(db, collectionName));
+        return onSnapshot(q, (querySnapshot) => {
+            console.log(`[MASTER] Sucesso! ${collectionName} retornou ${querySnapshot.size} documentos.`);
+            const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Firestore Timestamps to ISOString
+            const processedData = data.map(item => {
+                for (const key in item) {
+                    if (item[key] && typeof item[key].toDate === 'function') {
+                        item[key] = item[key].toDate().toISOString();
+                    }
+                }
+                return item;
+            });
+            callback(processedData);
+        }, (error) => {
+             console.error(`[MASTER ERROR] Falha ao ler Collection Group ${collectionName}:`, error);
+             if (error.code === 'permission-denied') {
+                 console.warn("PERMISSÃO NEGADA: O usuário atual não tem permissão para ler dados de todos os usuários. Verifique as 'Firestore Rules'.");
+             }
+        });
     };
 
     window.addUserSubcollectionDoc = (collectionName, data) => {

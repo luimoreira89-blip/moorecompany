@@ -13,10 +13,18 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import PostBoard from './PostBoard';
 
 
+// --- CONFIGURAÇÃO DA CONTA MESTRA ---
+// ADICIONE O EMAIL DA SUA NOVA CONTA AQUI NESTA LISTA
+const MASTER_EMAILS = [
+    "admin@master.com", 
+    "suporte@rarecompany.com" 
+];
+
 // --- SUB-COMPONENTS --- //
 declare global {
     interface Window {
         watchUserSubcollection: (collectionName: string, callback: (data: any[]) => void) => () => void;
+        watchCollectionGroup: (collectionName: string, callback: (data: any[]) => void) => () => void;
         addUserSubcollectionDoc: (collectionName: string, data: any) => Promise<any>;
         updateUserSubcollectionDoc: (collectionName: string, docId: string, data: any) => Promise<void>;
         deleteUserSubcollectionDoc: (collectionName: string, docId: string) => Promise<void>;
@@ -65,11 +73,19 @@ const Sidebar: React.FC<{
         setCurrentPage(page);
         setIsSidebarOpen(false); // Fecha a sidebar ao navegar
     };
+    
+    // Verifica se o email do usuário está na lista de Masters
+    const isMaster = user.email && MASTER_EMAILS.includes(user.email);
 
     return (
         <div className={`fixed inset-y-0 left-0 z-30 w-60 bg-gray-900 p-4 flex flex-col border-r border-gray-800 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} sm:relative sm:translate-x-0`}>
-            <div className="mb-10 text-center h-24 flex items-center justify-center">
-                <img src="https://iili.io/Kw8h2El.png" alt="Utmify Logo" className="h-20 w-auto" />
+            <div className="mb-10 text-center h-24 flex items-center justify-center flex-col">
+                <img src="https://iili.io/Kw8h2El.png" alt="Utmify Logo" className="h-16 w-auto" />
+                {isMaster && (
+                    <span className="mt-2 bg-red-900/50 text-red-400 text-xs font-bold px-2 py-0.5 rounded border border-red-700/50">
+                        ADMIN MASTER
+                    </span>
+                )}
             </div>
             <nav className="flex flex-col space-y-2 flex-grow">
                 {navItems.map(item => (
@@ -233,7 +249,7 @@ const DailyMetricFormModal: React.FC<{
 };
 
 
-const MetricTable: React.FC<{ metrics: DailyMetric[]; onEdit: (metric: DailyMetric) => void; onDelete: (id: string) => void; }> = ({ metrics, onEdit, onDelete }) => {
+const MetricTable: React.FC<{ metrics: DailyMetric[]; onEdit: (metric: DailyMetric) => void; onDelete: (id: string) => void; isMaster: boolean }> = ({ metrics, onEdit, onDelete, isMaster }) => {
     const sortedMetrics = [...metrics].sort((a, b) => b.date.localeCompare(a.date));
 
     if (sortedMetrics.length === 0) {
@@ -257,10 +273,12 @@ const MetricTable: React.FC<{ metrics: DailyMetric[]; onEdit: (metric: DailyMetr
                             <div className="text-gray-400">Cliques:</div><div className="text-right text-white">{metric.clicks}</div>
                             <div className="text-gray-400">Views:</div><div className="text-right text-white">{metric.views}</div>
                         </div>
-                        <div className="flex justify-end gap-4 border-t border-gray-700 pt-3 mt-2">
-                            <button onClick={() => onEdit(metric)} className="text-primary-400 hover:text-primary-300 font-medium text-sm">Editar</button>
-                            <button onClick={() => onDelete(metric.id)} className="text-red-400 hover:text-red-300 font-medium text-sm">Excluir</button>
-                        </div>
+                        {!isMaster && (
+                            <div className="flex justify-end gap-4 border-t border-gray-700 pt-3 mt-2">
+                                <button onClick={() => onEdit(metric)} className="text-primary-400 hover:text-primary-300 font-medium text-sm">Editar</button>
+                                <button onClick={() => onDelete(metric.id)} className="text-red-400 hover:text-red-300 font-medium text-sm">Excluir</button>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>
@@ -276,7 +294,7 @@ const MetricTable: React.FC<{ metrics: DailyMetric[]; onEdit: (metric: DailyMetr
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vendas</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Cliques</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Views</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Ações</th>
+                            {!isMaster && <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Ações</th>}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-800">
@@ -289,12 +307,14 @@ const MetricTable: React.FC<{ metrics: DailyMetric[]; onEdit: (metric: DailyMetr
                                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.sales}</td>
                                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.clicks}</td>
                                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{metric.views}</td>
-                                <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="flex items-center justify-end gap-4">
-                                        <button onClick={() => onEdit(metric)} className="text-primary-400 hover:text-primary-300">Editar</button>
-                                        <button onClick={() => onDelete(metric.id)} className="text-red-400 hover:text-red-300">Excluir</button>
-                                    </div>
-                                </td>
+                                {!isMaster && (
+                                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div className="flex items-center justify-end gap-4">
+                                            <button onClick={() => onEdit(metric)} className="text-primary-400 hover:text-primary-300">Editar</button>
+                                            <button onClick={() => onDelete(metric.id)} className="text-red-400 hover:text-red-300">Excluir</button>
+                                        </div>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>
@@ -318,8 +338,9 @@ const Header: React.FC<{
     currentPage: string;
     onToggleSidebar: () => void;
     gmvData: { current: number; goal: number };
-}> = ({ onAddPost, onAddMetric, currentPage, onToggleSidebar, gmvData }) => {
-    const showAddButton = currentPage === 'posts' || currentPage === 'metrics';
+    isMaster: boolean;
+}> = ({ onAddPost, onAddMetric, currentPage, onToggleSidebar, gmvData, isMaster }) => {
+    const showAddButton = (currentPage === 'posts' || currentPage === 'metrics') && !isMaster;
     const buttonAction = currentPage === 'posts' ? onAddPost : onAddMetric;
     const buttonText = currentPage === 'posts' ? 'Adicionar Post' : 'Adicionar Registro';
 
@@ -465,6 +486,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     const [currentPage, setCurrentPage] = useState('metrics');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    // Identify Master User
+    const isMaster = user.email && MASTER_EMAILS.includes(user.email);
+
 
     // Filters for Posts
     const [period, setPeriod] = useState<Period>(Period.All);
@@ -512,17 +536,33 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
     // --- DATA FETCHING --- //
     useEffect(() => {
-        const unsubPosts = window.watchUserSubcollection('posts', (data) => {
-            setAllPosts(data as Post[]);
-        });
-        const unsubMetrics = window.watchUserSubcollection('dailyMetrics', (data) => {
-            setAllMetrics(data as DailyMetric[]);
-        });
+        let unsubPosts: () => void;
+        let unsubMetrics: () => void;
+
+        if (isMaster) {
+            // Master Account: Fetch data from ALL users using collectionGroup
+            console.log("Modo Mestre Ativado: Buscando dados de todos os usuários.");
+            unsubPosts = window.watchCollectionGroup('posts', (data) => {
+                setAllPosts(data as Post[]);
+            });
+            unsubMetrics = window.watchCollectionGroup('dailyMetrics', (data) => {
+                setAllMetrics(data as DailyMetric[]);
+            });
+        } else {
+            // Standard Account: Fetch only own data
+            unsubPosts = window.watchUserSubcollection('posts', (data) => {
+                setAllPosts(data as Post[]);
+            });
+            unsubMetrics = window.watchUserSubcollection('dailyMetrics', (data) => {
+                setAllMetrics(data as DailyMetric[]);
+            });
+        }
+
         return () => {
-            unsubPosts();
-            unsubMetrics();
+            if (unsubPosts) unsubPosts();
+            if (unsubMetrics) unsubMetrics();
         };
-    }, []);
+    }, [isMaster]);
 
     // --- COMPUTED DATA & MEMOS --- //
     const totalGmv = useMemo(() => {
@@ -833,13 +873,33 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                     currentPage={currentPage}
                     onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                     gmvData={{ current: totalGmv, goal: 250000 }}
+                    isMaster={isMaster}
                 />
                 
                 <div className="flex-1 overflow-auto p-4 sm:p-6">
+                    {/* HELP BANNER FOR MASTER ACCOUNTS WITH NO DATA */}
+                    {isMaster && allPosts.length === 0 && allMetrics.length === 0 && (
+                         <div className="bg-yellow-900/30 border border-yellow-700/50 p-4 rounded-lg mb-6 animate-pulse">
+                            <h3 className="text-yellow-400 font-bold flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Atenção: Modo Mestre Ativo mas sem dados visíveis
+                            </h3>
+                            <div className="text-yellow-200/80 text-sm mt-2 ml-8 space-y-2">
+                                <p>Se você sabe que existem dados em outras contas, mas eles não estão aparecendo aqui:</p>
+                                <ul className="list-disc list-inside">
+                                    <li>Verifique as <strong>Regras de Segurança (Firestore Rules)</strong> no console do Firebase. A conta Mestra precisa de permissão de leitura global. Tente configurar <code>allow read: if request.auth != null;</code> para teste.</li>
+                                    <li>Abra o <strong>Console do Navegador (F12)</strong> e verifique se há um erro vermelho com um link. Se houver, o Firebase pode estar solicitando a criação de um índice composto.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+
                     {currentPage === 'metrics' && (
                         <div className="space-y-6">
                              <div className="flex justify-between items-center">
-                                <h2 className="text-2xl font-bold text-white">Análise de Métricas</h2>
+                                <h2 className="text-2xl font-bold text-white">Análise de Métricas {isMaster && <span className="text-sm font-normal text-red-400 bg-red-900/30 px-2 py-1 rounded-md border border-red-800 ml-2">(Modo Global)</span>}</h2>
                             </div>
                             {/* Metric Filters */}
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
@@ -872,14 +932,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
                             {/* KPIs */}
                             <div className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <KpiCard title="GMV" value={`R$ ${kpiData.gmv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
                                     <KpiCard title="Lucro (Comissão)" value={`R$ ${kpiData.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
                                     <KpiCard title="Itens Vendidos" value={kpiData.sales.toLocaleString('pt-BR')} />
-                                    <KpiCard title="Vídeos Postados" value={kpiData.videosPostados.toLocaleString('pt-BR')} />
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:w-3/4 mx-auto pt-2">
-                                    <KpiCard title="RPP" value={`R$ ${kpiData.rpp.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:w-3/4 mx-auto pt-2">
                                     <KpiCard title="Cliques" value={kpiData.clicks.toLocaleString('pt-BR')} />
                                     <KpiCard title="Views" value={kpiData.views.toLocaleString('pt-BR')} />
                                 </div>
@@ -918,15 +976,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                     </ResponsiveContainer>
                                  </div>
                             </div>
-                             {/* Metric Table */}
-                             <div className="max-h-96 overflow-y-auto">
-                                <MetricTable metrics={filteredMetrics} onEdit={handleEditMetric} onDelete={handleDeleteMetric} />
-                             </div>
                         </div>
                     )}
                     {currentPage === 'posts' && (
                         <div className="space-y-6">
-                            <h2 className="text-2xl font-bold text-white">Performance de Conteúdo</h2>
+                            <h2 className="text-2xl font-bold text-white">Performance de Conteúdo {isMaster && <span className="text-sm font-normal text-red-400 bg-red-900/30 px-2 py-1 rounded-md border border-red-800 ml-2">(Modo Global)</span>}</h2>
 
                             {/* Post KPIs */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
