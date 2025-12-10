@@ -1,3 +1,4 @@
+
 export enum Status {
     Pending = 'Pendente',
     Posted = 'Postado',
@@ -17,6 +18,8 @@ export enum Period {
     Last7Days = 'Últimos 7 dias',
     Last15Days = 'Últimos 15 dias',
     Last30Days = 'Últimos 30 dias',
+    Monthly = 'Mensal',
+    Yearly = 'Anual',
     Custom = 'Personalizado'
 }
 

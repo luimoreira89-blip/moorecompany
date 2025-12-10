@@ -7,7 +7,8 @@ import PostTable from './PostTable';
 import PostFormModal from './PostFormModal';
 import { isValidDriveLink } from '../utils/postUtils';
 // Fix: Consolidate date-fns imports to resolve module resolution errors.
-import { parseISO, startOfDay, endOfDay, format, eachDayOfInterval } from 'date-fns';
+import { parseISO, startOfDay, endOfDay, format, eachDayOfInterval, startOfMonth, endOfMonth, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 // Fix: Add missing imports from recharts for the new line chart.
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
 import PostBoard from './PostBoard';
@@ -505,12 +506,35 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     const [metricStartDate, setMetricStartDate] = useState('');
     const [metricEndDate, setMetricEndDate] = useState('');
     const [metricAccountFilter, setMetricAccountFilter] = useState('');
+    const [metricMonth, setMetricMonth] = useState(new Date().getMonth());
+    const [metricYear, setMetricYear] = useState(new Date().getFullYear());
+
 
     // Filters for Analytics Chart
     const [chartMetric, setChartMetric] = useState<'GMV' | 'Lucro' | 'Views'>('GMV');
     const [chartPeriod, setChartPeriod] = useState<Period>(Period.Last7Days);
     const [chartStartDate, setChartStartDate] = useState('');
     const [chartEndDate, setChartEndDate] = useState('');
+    const [chartMonth, setChartMonth] = useState(new Date().getMonth());
+    const [chartYear, setChartYear] = useState(new Date().getFullYear());
+
+    // Options for Month/Year selectors
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i); 
+    const months = [
+        { value: 0, label: 'Janeiro' },
+        { value: 1, label: 'Fevereiro' },
+        { value: 2, label: 'Março' },
+        { value: 3, label: 'Abril' },
+        { value: 4, label: 'Maio' },
+        { value: 5, label: 'Junho' },
+        { value: 6, label: 'Julho' },
+        { value: 7, label: 'Agosto' },
+        { value: 8, label: 'Setembro' },
+        { value: 9, label: 'Outubro' },
+        { value: 10, label: 'Novembro' },
+        { value: 11, label: 'Dezembro' },
+    ];
 
 
     // --- ERROR HANDLER --- //
@@ -632,11 +656,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 end: metricEndDate ? endOfDay(parseISO(metricEndDate)) : null
             };
         }
+        if (metricPeriod === Period.Monthly) {
+            return {
+                start: startOfMonth(new Date(metricYear, metricMonth)),
+                end: endOfMonth(new Date(metricYear, metricMonth))
+            };
+        }
+        if (metricPeriod === Period.Yearly) {
+            return {
+                start: startOfYear(new Date(metricYear, 0)),
+                end: endOfYear(new Date(metricYear, 0))
+            };
+        }
         if (metricPeriod === Period.All) {
             return { start: null, end: null };
         }
         return getPeriodRange(metricPeriod);
-    }, [metricPeriod, metricStartDate, metricEndDate]);
+    }, [metricPeriod, metricStartDate, metricEndDate, metricMonth, metricYear]);
 
     const filteredMetrics = useMemo(() => {
         if (!metricDateRange.start || !metricDateRange.end) {
@@ -703,8 +739,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 end: chartEndDate ? endOfDay(parseISO(chartEndDate)) : null
             };
         }
+        if (chartPeriod === Period.Monthly) {
+            return {
+                start: startOfMonth(new Date(chartYear, chartMonth)),
+                end: endOfMonth(new Date(chartYear, chartMonth))
+            };
+        }
+        if (chartPeriod === Period.Yearly) {
+            return {
+                start: startOfYear(new Date(chartYear, 0)),
+                end: endOfYear(new Date(chartYear, 0))
+            };
+        }
         return getPeriodRange(chartPeriod);
-    }, [chartPeriod, chartStartDate, chartEndDate]);
+    }, [chartPeriod, chartStartDate, chartEndDate, chartMonth, chartYear]);
 
 
     const analyticsChartData = useMemo(() => {
@@ -718,8 +766,32 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             return metricDate >= chartDateRange.start! && metricDate <= chartDateRange.end!;
         });
         
+        // Group by Month if Yearly
+        if (chartPeriod === Period.Yearly) {
+            const monthsInYear = eachMonthOfInterval({ start: chartDateRange.start, end: chartDateRange.end });
+            return monthsInYear.map(monthDate => {
+                 const monthStr = format(monthDate, 'yyyy-MM');
+                 // Filter metrics strictly for this month (simplest check is string startsWith)
+                 const metricsInMonth = metricsForChart.filter(m => m.date.startsWith(monthStr));
+                 
+                 const value = metricsInMonth.reduce((sum, m) => {
+                    switch (chartMetric) {
+                        case 'GMV': return sum + m.gmv;
+                        case 'Lucro': return sum + m.lucro;
+                        case 'Views': return sum + m.views;
+                        default: return sum;
+                    }
+                }, 0);
+                
+                return {
+                    name: format(monthDate, 'MMM', { locale: ptBR }), // "jan", "fev" etc.
+                    [chartMetric]: value,
+                };
+            });
+        }
+
+        // Default: Group by Day
         const days = eachDayOfInterval({ start: chartDateRange.start, end: chartDateRange.end });
-        
         return days.map(day => {
             const dayStr = format(day, 'yyyy-MM-dd');
             const metricsForDay = metricsForChart.filter(m => m.date === dayStr);
@@ -737,7 +809,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 [chartMetric]: value,
             };
         });
-    }, [allMetrics, chartDateRange, chartMetric, metricAccountFilter]);
+    }, [allMetrics, chartDateRange, chartMetric, metricAccountFilter, chartPeriod]);
 
 
     // --- EVENT HANDLERS --- //
@@ -921,6 +993,30 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                         </div>
                                     </>
                                 )}
+                                {metricPeriod === Period.Monthly && (
+                                    <>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-400 mb-1">Mês</label>
+                                            <select value={metricMonth} onChange={e => setMetricMonth(Number(e.target.value))} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
+                                                {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-400 mb-1">Ano</label>
+                                            <select value={metricYear} onChange={e => setMetricYear(Number(e.target.value))} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
+                                                {years.map(y => <option key={y} value={y}>{y}</option>)}
+                                            </select>
+                                        </div>
+                                    </>
+                                )}
+                                {metricPeriod === Period.Yearly && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-1">Ano</label>
+                                        <select value={metricYear} onChange={e => setMetricYear(Number(e.target.value))} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
+                                            {years.map(y => <option key={y} value={y}>{y}</option>)}
+                                        </select>
+                                    </div>
+                                )}
                                  <div>
                                     <label className="block text-sm font-medium text-gray-400 mb-1">Conta</label>
                                     <select value={metricAccountFilter} onChange={e => setMetricAccountFilter(e.target.value)} className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
@@ -961,6 +1057,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                                 <input type="date" value={chartStartDate} onChange={e => setChartStartDate(e.target.value)} className="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white"/>
                                                 <input type="date" value={chartEndDate} onChange={e => setChartEndDate(e.target.value)} className="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white"/>
                                             </>
+                                        )}
+                                        {chartPeriod === Period.Monthly && (
+                                            <>
+                                                <select value={chartMonth} onChange={e => setChartMonth(Number(e.target.value))} className="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
+                                                    {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                                                </select>
+                                                <select value={chartYear} onChange={e => setChartYear(Number(e.target.value))} className="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
+                                                    {years.map(y => <option key={y} value={y}>{y}</option>)}
+                                                </select>
+                                            </>
+                                        )}
+                                        {chartPeriod === Period.Yearly && (
+                                            <select value={chartYear} onChange={e => setChartYear(Number(e.target.value))} className="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white">
+                                                {years.map(y => <option key={y} value={y}>{y}</option>)}
+                                            </select>
                                         )}
                                     </div>
                                 </div>
