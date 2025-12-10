@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Post, User, Status, Period, Format } from '../types';
 import { getPeriodRange, getStatus } from '../utils/dateUtils';
@@ -502,7 +501,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     const [postView, setPostView] = useState<'table' | 'board'>('table');
     
     // Filters for Metrics page
-    const [metricPeriod, setMetricPeriod] = useState<Period>(Period.Last7Days);
+    const [metricPeriod, setMetricPeriod] = useState<Period>(Period.Monthly);
     const [metricStartDate, setMetricStartDate] = useState('');
     const [metricEndDate, setMetricEndDate] = useState('');
     const [metricAccountFilter, setMetricAccountFilter] = useState('');
@@ -512,7 +511,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
     // Filters for Analytics Chart
     const [chartMetric, setChartMetric] = useState<'GMV' | 'Lucro' | 'Views'>('GMV');
-    const [chartPeriod, setChartPeriod] = useState<Period>(Period.Last7Days);
+    const [chartPeriod, setChartPeriod] = useState<Period>(Period.Monthly);
     const [chartStartDate, setChartStartDate] = useState('');
     const [chartEndDate, setChartEndDate] = useState('');
     const [chartMonth, setChartMonth] = useState(new Date().getMonth());
